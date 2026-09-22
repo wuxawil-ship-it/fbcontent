@@ -118,26 +118,26 @@ article milta hai. Jis feed se achi caption chahiye, Guardian behtar hai.
 **Card par `FEEDS.SKYNEWS.COM` likha aa raha tha.** Ab hostname → asli naam ka map hai
 (`outletName` in `src/sources.js`) — "Sky News", "The Guardian" waghera.
 
-**2026-09-22 — BARI RUKAWAT: Safu Crypto Facebook "Page" nahi hai.**
+**2026-09-22 — Page ka masla: pehle nahi tha, phir mil gaya.**
 
-Graph API Explorer mein `me/accounts` khaali aaya. `me?fields=id,name` ne bataya ke
-personal profile **"Malik Muzamil"** hai (id 122141056341211779), Safu Crypto nahi.
-Decisive test: OAuth dialog "Opt in to current Pages only" ke baad **page picker screen
-aayi hi nahi** — seedha "Malik Muzamil has been connected" par chala gaya. Facebook wo
-screen sirf tab dikhata hai jab account ke paas koi Page ho.
+Shuru mein `me/accounts` khaali aaya aur OAuth dialog page picker screen skip kar gaya —
+is se maine ghalat nateeja nikala ke Safu Crypto Page nahi, sirf professional-mode profile hai.
 
-Matlab: Safu Crypto ek **profile hai professional mode mein**, Page nahi. Facebook
-profiles par Graph API se post karne ki ijazat deta hi nahi — koi setting, koi permission,
-koi token isay theek nahi kar sakta. `src/facebook.js` ka code theek hai, bas us ke liye
-Page chahiye jo maujood nahi.
+**Ye ghalat tha.** User ne page ko professional se **business** mode mein switch kiya,
+us ke baad wohi dialog page picker dikhane laga:
 
-Raaste:
-- **A (chalu hai):** semi-automation — script card + caption `out/` mein banati hai,
-  upload manual. `node src/run.js review` folder bhi khol deta hai.
-- **B:** asli Page banana — poori automation chalegi, lekin followers zero se aur
-  monetization dobara qualify karni paregi. Abhi 24,787 engagement chal raha hai, mehnga sauda.
-- **C:** Professional dashboard → All tools mein "Create a Page"/"Switch to Page" dhoondna —
-  Meta kabhi kabhi followers ke saath migration deta hai. **Abhi check nahi kiya.**
+    Safu Crypto — 1009046445621078
+
+Sabaq: `me/accounts` khaali hona ya picker screen ka skip hona sirf itna batata hai ke
+**us waqt** account par koi eligible Page nahi tha — ye sabit nahi karta ke Page ho hi nahi sakta.
+Aisi soorat mein page ki mode/settings check karni chahiye, nateeja nahi nikalna chahiye.
+
+**Doosra masla jo yahan pakra gaya:** dobara authorize karte waqt `pages_manage_posts`
+permissions list se gir gaya tha. Review screen par sirf "Read content" aur "Show a list of
+Pages" thin. Aise token se padha to ja sakta hai lekin post nahi hoti — aur error posting ke
+waqt aata, setup ke waqt nahi. **Review screen par hamesha tasdeeq karo ke post/manage wali
+permission bhi list mein hai.**
+
 
 ---
 
@@ -158,8 +158,7 @@ signature width ko bhi cover karti hai.
 
 ## Abhi pending
 
-- [ ] **Auto-post block hai** — Safu Crypto Page nahi hai (upar dekho). `publishPhoto()` code likha hua hai lekin kabhi chala nahi
-- [ ] Professional dashboard → All tools mein Page migration ka option check karna hai
+- [ ] **Auto-post:** Page mil gaya (1009046445621078). Token chahiye jisme `pages_manage_posts` ho. `publishPhoto()` abhi tak live nahi chala
 - [ ] Guardian ki images 700px par atki hain (card 968 chahta hai) — thori soft rehti hain
 - [ ] Token ~60 din baad refresh karna hota hai — reminder chahiye
 - [ ] `data/seen.json` deploy par persist karna zaroori hai warna duplicate post honge
