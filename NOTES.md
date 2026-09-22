@@ -51,8 +51,10 @@ Reference: The London Economic ka post — peeche banday ki bari tasveer, upar-l
 chhoti tasveer (related incident) ring ke saath. Ab `inset: { image, ring }` support hai,
 teeno templates par. Ring: `white` / `red` / `accent`.
 
-**2026-09-22 — Project `~/fbcontent` mein, git init ho chuka.**
-GitHub par push abhi nahi hua — user se poochna hai (private vs public).
+**2026-09-22 — Project `~/fbcontent`, GitHub par private repo.**
+Repo: https://github.com/wuxawil-ship-it/fbcontent (private)
+`.env` gitignored hai, push se pehle secret scan bhi kiya — kuch leak nahi hua.
+Aage `gh` CLI `~/.local/bin/gh` par hai, Node `~/.local/node/bin` par (dono `~/.zshrc` mein).
 
 ---
 
@@ -91,7 +93,6 @@ lowercase bhejne par reject ho sakta hai.
 
 - [ ] **Gemini API key** — poori chain live test nahi hui (rewrite + caption + focus)
 - [ ] **FB page token** — user khud banayega, post karna live test nahi hua
-- [ ] GitHub push — private ya public, user ka faisla
 - [ ] Token ~60 din baad refresh karna hota hai — reminder chahiye
 - [ ] `data/seen.json` deploy par persist karna zaroori hai warna duplicate post honge
 
