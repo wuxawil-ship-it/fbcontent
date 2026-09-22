@@ -285,6 +285,26 @@ kaafi hai.
 
 ---
 
+## Texture aur variation (user feedback, 2026-09-22 raat)
+
+**Texture pehli dafa galat bana.** Maine sirf gradient lagaya tha; user ko reference mein
+"paint ke cheentay... frosty look" chahiye tha. Andaza lagane ke bajaye 3 variants ka
+swatch page bana kar browser mein saamne rakh kar compare kiya —
+`spatter` (barik cheentay), `frosty` (bare dhabbe), `crystal` (dono).
+**crystal** chuna: do turbulence layers, ek bara ek chhota.
+
+**Sabaq:** texture/design andaze se nahi banta. Swatch page bana kar dekho.
+
+**Red box har post par aa raha tha** — variation khatam. Ab `LOOKS` ki rotation hai
+(`src/run.js`), kul posts ki ginti par chalti hai:
+
+    classic → classic+box → overlay+circle → classic+circle → band → overlay+box
+
+Yani laal box har chhathi post par, gol circle bhi bari bari se. Prompt mein bhi punchline
+ki shart sakht kar di (10 mein se 8 khabron mein khaali bhejni hai).
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar

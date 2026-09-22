@@ -7,7 +7,7 @@ import { buildPosts } from './ai.js';
 import { fetchImageSet } from './image.js';
 import { pickSource, fetchArticleMeta, ageHours } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
-import { isSeen, markSeen, lastPostedAt, postsToday, cleanup } from './store.js';
+import { isSeen, markSeen, lastPostedAt, postsToday, totalPosted, cleanup } from './store.js';
 import { readQueue, pushQueue, shiftQueue, requeue } from './queue.js';
 
 const args = process.argv.slice(2);
@@ -92,6 +92,17 @@ async function refill(need) {
   if (ready.length) console.log(`  ✓ ${pushQueue(ready)} posts qatar mein tayyar`);
 }
 
+/* Har post ek jaisi na lage — bari bari se shakal badalti hai.
+   punch = laal box wali line, inset = upar gol tasveer. */
+const LOOKS = [
+  { template: 'classic', punch: false, inset: false },
+  { template: 'classic', punch: true,  inset: false },
+  { template: 'overlay', punch: false, inset: true  },
+  { template: 'classic', punch: false, inset: true  },
+  { template: 'band',    punch: false, inset: false },
+  { template: 'overlay', punch: true,  inset: false },
+];
+
 /* ------------------------------------------------- qatar se post */
 async function publishOne(entry, { post }) {
   const age = ageHours(entry.publishedAt);
@@ -102,17 +113,23 @@ async function publishOne(entry, { post }) {
   }
   console.log(`\n  → ${entry.title}  (${age.toFixed(1)}h purani)`);
 
-  const want = cfg.card.inset ? 2 : 1;
-  const pics = await fetchImageSet(entry.images, { max: want });
+  /* is post ki shakl — pichli posts se alag */
+  const look = LOOKS[totalPosted() % LOOKS.length];
+  const useInset = look.inset && cfg.card.inset;
+  console.log(`    look: ${look.template}${look.punch ? ' + box' : ''}${useInset ? ' + circle' : ''}`);
+
+  const pics = await fetchImageSet(entry.images, { max: useInset ? 2 : 1 });
   if (!pics.length) { console.log('    koi chalne wali image nahi — chhor rahe hain'); return null; }
   const [pic, second] = pics;
   console.log(`    image: ${pic.w}x${pic.h}`);
 
   const file = path.join(cfg.dirs.out, `${stamp()}-${slug(entry.title)}.jpg`);
   const card = await renderCard({
-    template: opt('template', cfg.card.template),
-    headline: entry.headline, punchline: entry.punchline, images: [pic.file],
-    inset: second ? { image: second.file, ring: 'white' } : null,
+    template: opt('template', look.template),
+    headline: entry.headline,
+    punchline: look.punch ? entry.punchline : '',
+    images: [pic.file],
+    inset: (useInset && second) ? { image: second.file, ring: 'white' } : null,
     focus: entry.focus, accent: cfg.card.accent, texture: cfg.card.texture,
     kicker: entry.kicker, brand: cfg.card.brand,
     footer: entry.source ? `Source: ${entry.source}` : '',

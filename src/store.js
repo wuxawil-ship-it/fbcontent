@@ -20,6 +20,11 @@ export function lastPostedAt() {
   return times.length ? Math.max(...times) : 0;
 }
 
+/** ab tak kul kitni posts — look ki bari-bari (rotation) isi se chalti hai */
+export function totalPosted() {
+  return Object.values(load()).filter(v => v.posted).length;
+}
+
 /** aaj (local date) kitni posts ja chuki hain */
 export function postsToday() {
   const today = new Date().toDateString();
