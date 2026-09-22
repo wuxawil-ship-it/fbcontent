@@ -169,6 +169,20 @@ signature width ko bhi cover karti hai.
 
 ---
 
+## Setup mukammal (2026-09-22)
+
+| cheez | halat |
+|---|---|
+| Gemini | ✓ `gemini-3.6-flash` |
+| Page | ✓ Safu Crypto `1009046445621078` |
+| Page token | ✓ PAGE type, `pages_manage_posts`, expiry 0 (kabhi nahi) |
+| App secret / user token | hata diye — sirf `fb-setup` ke input the, `src/` unhe padhta hi nahi |
+
+Dobara `fb-setup` chalana pare (token revoke ho jaye, nayi permission chahiye) to App Secret
+dashboard se dobara mil jata hai: App → Settings → Basic → Show.
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar
