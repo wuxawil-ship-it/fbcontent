@@ -30,7 +30,9 @@ async function demo() {
     images: [path.join(ROOT, 'assets/demo-a.jpg')],
     inset: { image: path.join(ROOT, 'assets/demo-b.jpg'), ring: 'white' },
     focus: 'center', accent: cfg.card.accent, texture: cfg.card.texture,
-    kicker: 'World', brand: cfg.card.brand || '@safucrypto', footer: 'Source: Reuters',
+    kicker: 'World',
+    brand: cfg.card.footer ? (cfg.card.brand || '@safucrypto') : '',
+    footer: cfg.card.footer ? 'Source: Reuters' : false,
   };
   for (const template of ['classic', 'overlay', 'band']) {
     const out = path.join(cfg.dirs.out, `demo-${template}.jpg`);
@@ -131,8 +133,9 @@ async function publishOne(entry, { post }) {
     images: [pic.file],
     inset: (useInset && second) ? { image: second.file, ring: 'white' } : null,
     focus: entry.focus, accent: cfg.card.accent, texture: cfg.card.texture,
-    kicker: entry.kicker, brand: cfg.card.brand,
-    footer: entry.source ? `Source: ${entry.source}` : '',
+    kicker: entry.kicker,
+    brand: cfg.card.footer ? cfg.card.brand : '',
+    footer: cfg.card.footer ? (entry.source ? `Source: ${entry.source}` : '') : false,
   }, file);
 
   const caption = [entry.caption, entry.link && `\nSource: ${entry.link}`].filter(Boolean).join('\n');

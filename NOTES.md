@@ -305,6 +305,15 @@ ki shart sakht kar di (10 mein se 8 khabron mein khaali bhejni hai).
 
 ---
 
+**Footer hata diya (user feedback).** `@safucrypto` aur `SOURCE: ...` dono card se nikal
+gaye — `CARD_FOOTER=0`. Wo hissa sirf chhupaya nahi, poora bana hi nahi jata, is liye
+headline ko us ki jagah mil jati hai aur bari chhapti hai (max font 0.115 se 0.135 width).
+Wapas chahiye to `CARD_FOOTER=1`.
+
+Source ka naam ab sirf caption mein rehta hai (link ke saath) — card par nahi.
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar

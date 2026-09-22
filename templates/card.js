@@ -102,7 +102,7 @@
 
     const hl = card.querySelector('#hl');
     const box = hl.parentElement;
-    const size = autofit(hl, box, { min: d.minFont || 30, max: d.maxFont || Math.round(d.width * 0.115) });
+    const size = autofit(hl, box, { min: d.minFont || 30, max: d.maxFont || Math.round(d.width * 0.135) });
 
     document.body.dataset.ready = '1';
     return { fontSize: size };

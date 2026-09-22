@@ -29,7 +29,8 @@ export const cfg = {
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
               height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
               accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0',
-              texture: env('CARD_TEXTURE', 'ice').replace(/^none$/, '') },
+              texture: env('CARD_TEXTURE', 'ice').replace(/^none$/, ''),
+              footer: env('CARD_FOOTER', '0') === '1' },
   post:     { language: env('POST_LANGUAGE', 'English'),
               perDay: num('POSTS_PER_DAY', 18),
               minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */
