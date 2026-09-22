@@ -28,6 +28,7 @@ jobs:
       POST_LANGUAGE: English
       BRAND_HANDLE: '@safucrypto'
       BRAND_ACCENT: '#31D6E8'
+      CARD_TEXTURE: ice
       CARD_TEMPLATE: classic
       CARD_INSET: '1'
       POSTS_PER_DAY: '18'

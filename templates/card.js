@@ -78,10 +78,11 @@
     const d = Object.assign({ template: 'classic', width: 1080, height: 1350, headline: [], images: [] }, data);
     const card = document.getElementById('card');
 
-    card.className = d.template;
+    card.className = d.template + (d.texture ? ` tex-${d.texture}` : '');
     card.style.width = d.width + 'px';
     card.style.height = d.height + 'px';
     if (d.accent) document.documentElement.style.setProperty('--accent', d.accent);
+    if (d.textureUri) document.documentElement.style.setProperty('--tex', `url("${d.textureUri}")`);
     card.innerHTML = layout(d);
 
     /* fonts + images dono ready hone ka intezar — warna screenshot adhoori aati hai */

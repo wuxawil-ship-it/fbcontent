@@ -24,7 +24,8 @@ export const cfg = {
   fb:       { pageId: env('FB_PAGE_ID'), token: env('FB_PAGE_TOKEN'), version: env('FB_API_VERSION', 'v26.0') },
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
               height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
-              accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0' },
+              accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0',
+              texture: env('CARD_TEXTURE', 'ice').replace(/^none$/, '') },
   post:     { language: env('POST_LANGUAGE', 'English'),
               perDay: num('POSTS_PER_DAY', 18),
               minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */

@@ -27,7 +27,7 @@ async function demo() {
     ],
     images: [path.join(ROOT, 'assets/demo-a.jpg')],
     inset: { image: path.join(ROOT, 'assets/demo-b.jpg'), ring: 'white' },
-    focus: 'center', accent: cfg.card.accent,
+    focus: 'center', accent: cfg.card.accent, texture: cfg.card.texture,
     kicker: 'World', brand: cfg.card.brand || '@safucrypto', footer: 'Source: Reuters',
   };
   for (const template of ['classic', 'overlay', 'band']) {
@@ -117,7 +117,7 @@ async function runOnce({ post, open }) {
         template: opt('template', cfg.card.template),
         headline: ai.headline, punchline: ai.punchline, images: [pic.file],
         inset: second ? { image: second.file, ring: 'white' } : null,
-        focus: ai.focus, accent: cfg.card.accent,
+        focus: ai.focus, accent: cfg.card.accent, texture: cfg.card.texture,
         kicker: ai.kicker, brand: cfg.card.brand,
         footer: item.source ? `Source: ${item.source}` : '',
       }, file);
