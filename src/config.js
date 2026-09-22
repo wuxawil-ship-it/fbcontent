@@ -35,8 +35,10 @@ export const cfg = {
               minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */
               keepDays: num('KEEP_DAYS', 7),
               catchupMax: num('CATCHUP_MAX', 3),
-              batchSize: num('BATCH_SIZE', 6),
-              queueFloor: num('QUEUE_FLOOR', 2),
+              batchSize: num('BATCH_SIZE', 3),
+              maxAgeHours: num('MAX_AGE_HOURS', 8),
+              burstHours: num('BURST_HOURS', 2),
+              queueFloor: num('QUEUE_FLOOR', 1),
               spacingSeconds: num('SPACING_SECONDS', 90),
               priority: env('PRIORITY_KEYWORDS').split(',').map(k => k.trim().toLowerCase()).filter(Boolean) },
   maxPerRun: num('MAX_PER_RUN', 1),

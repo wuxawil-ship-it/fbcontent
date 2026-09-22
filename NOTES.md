@@ -261,6 +261,30 @@ Tasdeeq: ek request se 3 posts bani (`✓ 3 posts qatar mein tayyar`).
 
 ---
 
+## Taza khabar > tadaad (user feedback, 2026-09-22 raat)
+
+User: *"on point latest zyada achi hai... lazmi nahi 18, bas jitni ho sakti hain utni,
+lekin up to date."*
+
+Queue wali design mein yehi kami thi: 6 posts ek saath ban kar 8 ghante mein jati thin,
+aakhri wali basi. Teen tabdeeliyan:
+
+1. **Umar ki had** — `MAX_AGE_HOURS=8`. Is se purani khabar na queue mein jati hai na
+   post hoti hai. Queue mein rakhte waqt `publishedAt` bhi save hota hai, aur post karte
+   waqt dobara check hota hai (queue mein parey parey basi ho sakti hai).
+2. **Ranking: nayi pehle.** `rank = (keyword matches × 1.5) − umar ghanton mein`.
+   Yani Trump ki 3 ghante purani khabar 1 ghante purani aam khabar se aage rahegi,
+   lekin 10 ghante purani koi bhi khabar bahar.
+3. **`POSTS_PER_DAY` ab hadaf nahi, had hai.** Pehle wala catch-up number poora karne ke
+   liye purani khabrein post karta — wo hata diya. Ab `BURST_HOURS=2` hai: bohat taza
+   khabron ka jhund aa jaye to ek run mein zyada, warna aaram se ek.
+4. `BATCH_SIZE` 6 se **3** — queue chhoti rahe to usme maal basi nahi hota.
+
+Feeds mein 52 mein se 18 khabrein 8h se nayi thin, sab se nayi 0.5h — yani taza maal
+kaafi hai.
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar

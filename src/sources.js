@@ -38,6 +38,15 @@ function imageCandidates(block) {
 }
 
 
+/* Feed ki tareekh ko timestamp banao. Na mile to 0 — aisi khabar ko purani
+   maan kar chhor diya jayega, kyunki humein taza khabrein chahiye. */
+function when(str) {
+  const t = Date.parse(String(str || ''));
+  return Number.isFinite(t) ? t : 0;
+}
+
+export const ageHours = ts => ts ? (Date.now() - ts) / 3_600_000 : Infinity;
+
 /* Feed hostname ko parhne laiq naam banao — "FEEDS.SKYNEWS.COM" card par bura lagta hai */
 const OUTLETS = {
   'feeds.skynews.com': 'Sky News', 'news.sky.com': 'Sky News',
@@ -127,7 +136,8 @@ export async function fromRss(feeds = cfg.rss.feeds) {
             .filter(Boolean).join('\n\n'),
           link,
           images: imageCandidates(b),
-          publishedAt: tag(b, 'pubDate') || tag(b, 'updated') || tag(b, 'published'),
+          publishedAt: when(tag(b, 'pubDate') || tag(b, 'updated')
+                         || tag(b, 'published') || tag(b, 'dc:date')),
           source: outletName(new URL(feed).hostname),
         });
       }

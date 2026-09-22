@@ -31,13 +31,15 @@ jobs:
       CARD_TEXTURE: ice
       CARD_TEMPLATE: classic
       CARD_INSET: '1'
-      POSTS_PER_DAY: '18'
+      POSTS_PER_DAY: '18'      # hadaf nahi, oopri had
       MIN_GAP_MINUTES: '20'
       CATCHUP_MAX: '3'
       SPACING_SECONDS: '90'
       MAX_PER_RUN: '1'
-      BATCH_SIZE: '6'
-      QUEUE_FLOOR: '2'
+      BATCH_SIZE: '3'
+      QUEUE_FLOOR: '1'
+      MAX_AGE_HOURS: '8'
+      BURST_HOURS: '2'
       FB_API_VERSION: v26.0
       PRIORITY_KEYWORDS: 'trump,white house,maga,republican,democrat,congress,supreme court,pentagon,elon musk'
       RSS_FEEDS: 'https://feeds.skynews.com/feeds/rss/world.xml,https://www.theguardian.com/world/rss,https://www.theguardian.com/us-news/us-politics/rss,https://feeds.npr.org/1014/rss.xml,https://rss.dw.com/rdf/rss-en-world'
