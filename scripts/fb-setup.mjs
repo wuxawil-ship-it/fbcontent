@@ -41,13 +41,27 @@ const long = await get(api('oauth/access_token') +
 console.log('     ho gaya');
 
 console.log('2/3  aapke pages dhoond rahe hain...');
-const { data: pages = [] } = await get(
-  api('me/accounts') + `?fields=id,name,access_token&access_token=${encodeURIComponent(long.access_token)}`,
+const longUserToken = long.access_token;
+
+let { data: pages = [] } = await get(
+  api('me/accounts') + `?fields=id,name,access_token&access_token=${encodeURIComponent(longUserToken)}`,
   'pages list');
 
+/* Business portfolio ke owned pages aksar me/accounts mein nahi aate, lekin
+   page se seedha access_token maangne par mil jata hai. */
+if (!pages.length && cfg.fb.pageId) {
+  console.log('     me/accounts khaali — page se seedha token maang rahe hain...');
+  const direct = await get(
+    api(cfg.fb.pageId) + `?fields=id,name,access_token&access_token=${encodeURIComponent(longUserToken)}`,
+    'page token').catch(e => { console.error(`     ${e.message}`); return null; });
+  if (direct?.access_token) pages = [direct];
+}
+
 if (!pages.length) {
-  console.error('\n  Koi page nahi mila. Matlab app ko page ka access nahi diya gaya.');
-  console.error('  Graph API Explorer mein dobara token banao aur page ko tick karna mat bhoolna.\n');
+  console.error('\n  Koi page nahi mila.');
+  console.error('  - .env mein FB_PAGE_ID sahi hai? (abhi: ' + (cfg.fb.pageId || 'khaali') + ')');
+  console.error('  - Graph API Explorer mein token banate waqt page tick kiya tha?');
+  console.error('  - Aap us page ke admin hain?\n');
   process.exit(1);
 }
 

@@ -132,6 +132,19 @@ Sabaq: `me/accounts` khaali hona ya picker screen ka skip hona sirf itna batata 
 **us waqt** account par koi eligible Page nahi tha — ye sabit nahi karta ke Page ho hi nahi sakta.
 Aisi soorat mein page ki mode/settings check karni chahiye, nateeja nahi nikalna chahiye.
 
+**Page token kaise mila (ahem):** teeno scopes granted hone ke bawajood `me/accounts`
+hamesha `{"data":[]}` deta raha. Lekin page seedha padhi ja sakti thi
+(`GET /1009046445621078` -> Safu Crypto, Education, published). Ye Business portfolio ke
+owned pages ka maloom tareeqa hai — wo `me/accounts` mein nahi aate.
+
+**Hal:** page se seedha token maango —
+
+    GET /{page-id}?fields=access_token   (user token ke saath)
+
+Yahi 256-char page token deta hai. `scripts/fb-setup.mjs` mein ab ye fallback maujood hai:
+pehle `me/accounts`, khaali aaye to direct page call. `me/businesses` ke liye
+`business_management` scope chahiye hota hai jo humne nahi liya — zaroorat bhi nahi pari.
+
 **Doosra masla jo yahan pakra gaya:** dobara authorize karte waqt `pages_manage_posts`
 permissions list se gir gaya tha. Review screen par sirf "Read content" aur "Show a list of
 Pages" thin. Aise token se padha to ja sakta hai lekin post nahi hoti — aur error posting ke
@@ -158,7 +171,7 @@ signature width ko bhi cover karti hai.
 
 ## Abhi pending
 
-- [ ] **Auto-post:** Page mil gaya (1009046445621078). Token chahiye jisme `pages_manage_posts` ho. `publishPhoto()` abhi tak live nahi chala
+- [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar
 - [ ] Guardian ki images 700px par atki hain (card 968 chahta hai) — thori soft rehti hain
 - [ ] Token ~60 din baad refresh karna hota hai — reminder chahiye
 - [ ] `data/seen.json` deploy par persist karna zaroori hai warna duplicate post honge
