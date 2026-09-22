@@ -21,7 +21,7 @@ export const cfg = {
   rss:      { feeds: env('RSS_FEEDS').split(',').map(s => s.trim()).filter(Boolean) },
   apify:    { token: env('APIFY_TOKEN'), actor: env('APIFY_ACTOR', 'apify~facebook-posts-scraper'),
               pageUrl: env('APIFY_PAGE_URL') },
-  fb:       { pageId: env('FB_PAGE_ID'), token: env('FB_PAGE_TOKEN'), version: env('FB_API_VERSION', 'v23.0') },
+  fb:       { pageId: env('FB_PAGE_ID'), token: env('FB_PAGE_TOKEN'), version: env('FB_API_VERSION', 'v26.0') },
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
               height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
               accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0' },
