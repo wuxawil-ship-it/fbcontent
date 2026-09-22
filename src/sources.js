@@ -54,9 +54,13 @@ export function outletName(host) {
   return h.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-/* RSS sirf 1-2 line deta hai — achi caption ke liye poora article chahiye */
-export async function fetchArticleText(url, { max = 4000 } = {}) {
-  if (!url) return '';
+/* RSS sirf 1-2 line deta hai aur kuch feeds (DW) tasveer deti hi nahi.
+   Article page se poora text AUR og:image dono uthate hain — og:image aksar
+   feed ki thumbnail se bari hoti hai. */
+export async function fetchArticleMeta(url, { max = 4000 } = {}) {
+  const empty = { text: '', image: '' };
+  if (!url) return empty;
+
   try {
     const res = await fetch(url, {
       headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
@@ -64,14 +68,21 @@ export async function fetchArticleText(url, { max = 4000 } = {}) {
     });
     if (!res.ok) {
       /* kuch publishers (jaise Sky News) article pages par automated access block karte hain.
-         Unhe bypass nahi karte — RSS summary par guzara hota hai, caption thori chhoti aati hai. */
+         Unhe bypass nahi karte — RSS summary par guzara hota hai. */
       console.warn(`    article ${res.status} (${new URL(url).hostname}) — RSS summary use hogi`);
-      return '';
+      return empty;
     }
 
     let html = await res.text();
-    html = html.replace(/<(script|style|nav|footer|aside|form|figure)[\s\S]*?<\/\1>/gi, ' ');
 
+    const meta = prop => {
+      const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*>`, 'i');
+      const t = html.match(re)?.[0] || '';
+      return attr(t, /content=["']([^"']+)["']/i);
+    };
+    const image = meta('og:image') || meta('twitter:image') || '';
+
+    html = html.replace(/<(script|style|nav|footer|aside|form|figure)[\s\S]*?<\/\1>/gi, ' ');
     const body = html.match(/<article[\s\S]*?<\/article>/i)?.[0]
               || html.match(/<main[\s\S]*?<\/main>/i)?.[0]
               || html;
@@ -80,9 +91,12 @@ export async function fetchArticleText(url, { max = 4000 } = {}) {
       .map(m => strip(m[1]))
       .filter(t => t.length > 60);          /* nav/caption/boilerplate chhoti hoti hain */
 
-    return paras.join('\n\n').slice(0, max);
-  } catch { return ''; }
+    return { text: paras.join('\n\n').slice(0, max), image };
+  } catch { return empty; }
 }
+
+/** purane call sites ke liye */
+export const fetchArticleText = async (url, opts) => (await fetchArticleMeta(url, opts)).text;
 
 /** RSS / Atom feeds — sab se stable source, koi ToS masla nahi */
 export async function fromRss(feeds = cfg.rss.feeds) {
@@ -91,7 +105,9 @@ export async function fromRss(feeds = cfg.rss.feeds) {
   for (const feed of feeds) {
     try {
       const xml = await (await fetch(feed, { headers: { 'user-agent': 'newscard/1.0' } })).text();
-      const blocks = xml.match(/<(item|entry)[\s\S]*?<\/\1>/gi) || [];
+      /* (?=[\s>]) zaroori hai: RDF feeds (DW) ke channel mein <items> hota hai,
+         jo warna <item> samajh liya jata tha aur har khabar ka title "DW" aa raha tha */
+      const blocks = xml.match(/<(item|entry)(?=[\s>])[\s\S]*?<\/\1>/gi) || [];
       for (const b of blocks.slice(0, 12)) {
         const link = tag(b, 'link') || attr(b, /<link[^>]*href="([^"]+)"/i);
         items.push({

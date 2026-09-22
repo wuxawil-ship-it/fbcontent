@@ -24,7 +24,8 @@ const SCHEMA = {
         propertyOrdering: ['t', 'c'],
       },
     },
-    caption:  { type: 'STRING' },
+    /* array is liye ke model \n\n daalna bhool jata hai — wall of text ban jati thi */
+    caption:  { type: 'ARRAY', items: { type: 'STRING' } },
     focus:    { type: 'STRING', format: 'enum', enum: FOCUS },
   },
   required: ['usable', 'headline', 'caption', 'kicker', 'focus'],
@@ -50,8 +51,8 @@ const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumha
 4. kicker: 1-2 word category, e.g. "World", "Pakistan", "Markets", "Tech".
 5. focus: tasveer mein asal subject (banda/cheez) kahan hai — left/center/right/top/bottom.
    Card tasveer ko crop karta hai, is liye yeh theek batao warna chehra kat jata hai.
-6. caption: Facebook post ka text, **kam se kam 3 aur zyada se zyada 5 paragraphs**.
-   Har paragraph 2-4 jumlon ka. Ek hi lamba block MAT likho.
+6. caption: paragraphs ka ARRAY — har element ek paragraph. 3 se 5 elements.
+   Har paragraph 2-4 jumlon ka. Ek hi lamba element MAT bhejo.
    - para 1 = kya hua (facts, numbers, naam)
    - para 2 = background / context — pehle kya hua tha, yeh ahem kyun hai
    - para 3 = dono taraf ka moaqif, agar hai
@@ -143,5 +144,9 @@ export async function buildPost({ text, imagePath, imageUrl }) {
     seg.c !== 'white' && ++colored > 2 ? { ...seg, c: 'white' } : seg);
 
   out.focus = FOCUS.includes(out.focus) ? out.focus : 'center';
+
+  /* array -> text. Model kabhi string bhi bhej deta hai, dono handle karo. */
+  const paras = Array.isArray(out.caption) ? out.caption : String(out.caption || '').split(/\n{2,}/);
+  out.caption = paras.map(p => String(p).trim()).filter(Boolean).join('\n\n');
   return out;
 }

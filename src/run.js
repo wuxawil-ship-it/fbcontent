@@ -1,9 +1,11 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { ROOT, cfg } from './config.js';
 import { renderCard, closeBrowser } from './render.js';
 import { buildPost } from './ai.js';
 import { fetchImageSet } from './image.js';
-import { pickSource, fetchArticleText } from './sources.js';
+import { pickSource, fetchArticleMeta } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
 import { isSeen, markSeen } from './store.js';
 
@@ -36,7 +38,8 @@ async function demo() {
 }
 
 /* ---------------------------------------------------------- one pass */
-async function runOnce({ post }) {
+async function runOnce({ post, open }) {
+  const made = [];
   const items = await pickSource(opt('source'))();
   console.log(`  ${items.length} items mile`);
 
@@ -46,16 +49,24 @@ async function runOnce({ post }) {
   for (const item of fresh) {
     console.log(`\n  → ${item.title}`);
     try {
+      /* article pehle: us se poora text bhi milta hai aur og:image bhi */
+      const art = await fetchArticleMeta(item.link);
+      if (art.text) console.log(`    article: ${art.text.length} chars`);
+
+      /* Feed ki image pehle: og:image par aksar publisher ka logo baked hota hai
+         (Guardian ka "The Guardian" box), jo hamare card par bura lagta hai.
+         og:image sirf tab jab feed koi image de hi na (jaise DW). */
       const want = cfg.card.inset ? 2 : 1;
-      const pics = await fetchImageSet(item.images, { max: want });
+      let pics = await fetchImageSet(item.images, { max: want });
+      if (!pics.length && art.image) {
+        console.log('    feed mein image nahi — article ki og:image use ho rahi hai');
+        pics = await fetchImageSet([art.image], { max: want });
+      }
       if (!pics.length) { console.log('    skip: koi chalne wali image nahi mili'); continue; }
       const [pic, second] = pics;
       console.log(`    image: ${pic.w}x${pic.h}${second ? ` (+inset ${second.w}x${second.h})` : ''}`);
 
-      /* RSS sirf 1-2 line deta hai — poora article milay to caption bohat behtar banti hai */
-      const full = await fetchArticleText(item.link);
-      const text = full.length > item.text.length ? `${item.title}\n\n${full}` : item.text;
-      if (full) console.log(`    article: ${full.length} chars`);
+      const text = art.text.length > item.text.length ? `${item.title}\n\n${art.text}` : item.text;
 
       const ai = await buildPost({ text, imagePath: pic.file });
       if (!ai.usable) { console.log(`    skip: ${ai.reason}`); markSeen(item, { skipped: ai.reason }); continue; }
@@ -74,7 +85,12 @@ async function runOnce({ post }) {
       const caption = [ai.caption, item.link && `\nSource: ${item.link}`].filter(Boolean).join('\n');
 
       if (!post) {
-        console.log(`    [dry-run] post nahi kiya. Caption:\n${caption.split('\n').map(l => '    │ ' + l).join('\n')}`);
+        /* caption ko card ke saath .txt mein likho — manual posting ke liye copy karna asaan */
+        const txt = card.file.replace(/\.jpg$/, '.txt');
+        await fs.writeFile(txt, caption, 'utf8');
+        console.log(`    caption: ${path.basename(txt)}`);
+        console.log(caption.split('\n').map(l => '    │ ' + l).join('\n'));
+        made.push({ image: card.file, caption: txt, title: item.title });
         continue; /* dry-run mein seen mark nahi karte, taake dobara try ho sake */
       }
 
@@ -85,18 +101,25 @@ async function runOnce({ post }) {
       console.error(`    ✗ ${e.message}`);
     }
   }
+
+  if (made.length && !post) {
+    console.log(`\n  ${made.length} post tayyar — ${cfg.dirs.out}`);
+    made.forEach((m, i) => console.log(`    ${i + 1}. ${path.basename(m.image)}`));
+    if (open) spawn('open', [cfg.dirs.out], { stdio: 'ignore', detached: true }).unref();
+  }
 }
 
 /* ---------------------------------------------------------- main */
 const commands = {
   demo,
-  run:   () => runOnce({ post: flag('post') }),
+  run:    () => runOnce({ post: flag('post'), open: flag('open') }),
+  review: () => runOnce({ post: false, open: true }),
   check: async () => console.log(JSON.stringify(await whoami(), null, 2)),
   watch: async () => {
     const mins = Number(opt('every', 20));
     console.log(`watch mode — har ${mins} min. Ctrl+C se band karo.`);
     for (;;) {
-      await runOnce({ post: flag('post') }).catch(e => console.error('run fail:', e.message));
+      await runOnce({ post: flag('post'), open: false }).catch(e => console.error('run fail:', e.message));
       await new Promise(r => setTimeout(r, mins * 60_000));
     }
   },
@@ -104,7 +127,7 @@ const commands = {
 
 const fn = commands[cmd];
 if (!fn) {
-  console.log('usage: node src/run.js <demo|run|watch|check> [--post] [--source rss|apify] [--template classic|overlay|band] [--max N] [--every MINUTES]');
+  console.log('usage: node src/run.js <demo|run|review|watch|check> [--post] [--source rss|apify] [--template classic|overlay|band] [--max N] [--every MINUTES]');
   process.exit(1);
 }
 
