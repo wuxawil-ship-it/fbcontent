@@ -1,0 +1,87 @@
+/* Card renderer — same file browser preview aur Puppeteer dono use karte hain.
+   Puppeteer: await page.evaluate(d => window.renderCard(d), data)  */
+(function () {
+  const COLORS = ['white', 'lime', 'cyan', 'red', 'amber'];
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  }
+
+  /* headline segments -> colored inline spans */
+  function headlineHTML(segments) {
+    return segments.map((seg, i) => {
+      const c = COLORS.includes(seg.c) ? seg.c : 'white';
+      const sp = i < segments.length - 1 ? ' ' : '';
+      return `<span class="c-${c}">${esc(seg.t).trim()}${sp}</span>`;
+    }).join('');
+  }
+
+  /* Binary-search the biggest font-size jo box ke andar fit ho jaye */
+  function autofit(el, box, { min = 28, max = 200 } = {}) {
+    const fits = () => el.scrollHeight <= box.clientHeight + 1 && el.scrollWidth <= box.clientWidth + 1;
+    let lo = min, hi = max, best = min;
+    el.style.fontSize = max + 'px';
+    if (fits()) return max;
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      el.style.fontSize = mid + 'px';
+      if (fits()) { best = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    el.style.fontSize = best + 'px';
+    return best;
+  }
+
+  function photoHTML(images) {
+    const list = (images || []).slice(0, 2).filter(Boolean);
+    if (!list.length) return '<div class="photo"></div>';
+    return `<div class="photo">${list.map(src => `<img src="${esc(src)}" alt="">`).join('')}</div>`;
+  }
+
+  function layout(d) {
+    const head = `<div class="headbox"><div class="headline" id="hl">${headlineHTML(d.headline)}</div></div>`;
+    const foot = d.footer === false ? '' :
+      `<div class="footer"><span class="handle">${esc(d.brand || '')}</span><span>${esc(d.footer || '')}</span></div>`;
+    const kick = d.kicker ? `<div><span class="kicker">${esc(d.kicker)}</span></div>` : '';
+
+    switch (d.template) {
+      case 'overlay':
+        return photoHTML(d.images) + `<div class="scrim"></div>` +
+          `<div class="content">${kick}${head}${foot}</div>`;
+      case 'band':
+        return photoHTML(d.images) +
+          `<div class="content"><div class="rule"></div><div class="right">${kick}${head}${foot}</div></div>`;
+      default: /* classic */
+        return photoHTML(d.images) + head + foot;
+    }
+  }
+
+  async function renderCard(data) {
+    const d = Object.assign({ template: 'classic', width: 1080, height: 1350, headline: [], images: [] }, data);
+    const card = document.getElementById('card');
+
+    card.className = d.template;
+    card.style.width = d.width + 'px';
+    card.style.height = d.height + 'px';
+    if (d.accent) document.documentElement.style.setProperty('--lime', d.accent);
+    card.innerHTML = layout(d);
+
+    /* fonts + images dono ready hone ka intezar — warna screenshot adhoori aati hai */
+    await document.fonts.ready;
+    await Promise.all([...card.querySelectorAll('img')].map(img =>
+      img.complete ? img.decode().catch(() => {}) :
+        new Promise(res => { img.onload = img.onerror = res; }).then(() => img.decode().catch(() => {}))
+    ));
+
+    const hl = card.querySelector('#hl');
+    const box = hl.parentElement;
+    const size = autofit(hl, box, { min: d.minFont || 30, max: d.maxFont || Math.round(d.width * 0.115) });
+
+    document.body.dataset.ready = '1';
+    return { fontSize: size };
+  }
+
+  window.renderCard = renderCard;
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.CARD_DATA) renderCard(window.CARD_DATA);
+  });
+})();

@@ -1,0 +1,21 @@
+{
+  "name": "newscard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "News card generator + Facebook auto-poster (Puppeteer se design, Gemini se rewrite)",
+  "scripts": {
+    "demo": "node src/run.js demo",
+    "once": "node src/run.js run --dry",
+    "post": "node src/run.js run --post",
+    "watch": "node src/run.js watch",
+    "preview": "python3 -m http.server 8777",
+    "build:fonts": "node scripts/build-fonts.mjs"
+  },
+  "dependencies": {
+    "puppeteer": "^25.11.0"
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}
