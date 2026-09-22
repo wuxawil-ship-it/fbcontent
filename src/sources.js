@@ -37,6 +37,53 @@ function imageCandidates(block) {
   return [...new Map(found.sort((a, b) => b.w - a.w).map(i => [i.url, i])).values()].map(i => i.url);
 }
 
+
+/* Feed hostname ko parhne laiq naam banao — "FEEDS.SKYNEWS.COM" card par bura lagta hai */
+const OUTLETS = {
+  'feeds.skynews.com': 'Sky News', 'news.sky.com': 'Sky News',
+  'theguardian.com': 'The Guardian', 'rss.dw.com': 'DW',
+  'feeds.bbci.co.uk': 'BBC News', 'bbc.co.uk': 'BBC News', 'bbc.com': 'BBC News',
+  'reuters.com': 'Reuters', 'apnews.com': 'AP', 'aljazeera.com': 'Al Jazeera',
+  'cnn.com': 'CNN', 'nytimes.com': 'The New York Times', 'ft.com': 'Financial Times',
+};
+
+export function outletName(host) {
+  const h = String(host || '').replace(/^(www|feeds|rss|feed)\./, '');
+  if (OUTLETS[host]) return OUTLETS[host];
+  if (OUTLETS[h]) return OUTLETS[h];
+  return h.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/* RSS sirf 1-2 line deta hai — achi caption ke liye poora article chahiye */
+export async function fetchArticleText(url, { max = 4000 } = {}) {
+  if (!url) return '';
+  try {
+    const res = await fetch(url, {
+      headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      /* kuch publishers (jaise Sky News) article pages par automated access block karte hain.
+         Unhe bypass nahi karte — RSS summary par guzara hota hai, caption thori chhoti aati hai. */
+      console.warn(`    article ${res.status} (${new URL(url).hostname}) — RSS summary use hogi`);
+      return '';
+    }
+
+    let html = await res.text();
+    html = html.replace(/<(script|style|nav|footer|aside|form|figure)[\s\S]*?<\/\1>/gi, ' ');
+
+    const body = html.match(/<article[\s\S]*?<\/article>/i)?.[0]
+              || html.match(/<main[\s\S]*?<\/main>/i)?.[0]
+              || html;
+
+    const paras = [...body.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+      .map(m => strip(m[1]))
+      .filter(t => t.length > 60);          /* nav/caption/boilerplate chhoti hoti hain */
+
+    return paras.join('\n\n').slice(0, max);
+  } catch { return ''; }
+}
+
 /** RSS / Atom feeds — sab se stable source, koi ToS masla nahi */
 export async function fromRss(feeds = cfg.rss.feeds) {
   need(feeds.length, 'RSS_FEEDS');
@@ -55,7 +102,7 @@ export async function fromRss(feeds = cfg.rss.feeds) {
           link,
           images: imageCandidates(b),
           publishedAt: tag(b, 'pubDate') || tag(b, 'updated') || tag(b, 'published'),
-          source: new URL(feed).hostname.replace(/^www\./, ''),
+          source: outletName(new URL(feed).hostname),
         });
       }
     } catch (e) { console.warn(`  ! feed fail ${feed}: ${e.message}`); }

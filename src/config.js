@@ -17,7 +17,7 @@ const env = (k, d = '') => (process.env[k] ?? d).trim();
 const num = (k, d) => Number(env(k, String(d))) || d;
 
 export const cfg = {
-  gemini:   { key: env('GEMINI_API_KEY'), model: env('GEMINI_MODEL', 'gemini-2.5-flash') },
+  gemini:   { key: env('GEMINI_API_KEY'), model: env('GEMINI_MODEL', 'gemini-3.6-flash') },
   rss:      { feeds: env('RSS_FEEDS').split(',').map(s => s.trim()).filter(Boolean) },
   apify:    { token: env('APIFY_TOKEN'), actor: env('APIFY_ACTOR', 'apify~facebook-posts-scraper'),
               pageUrl: env('APIFY_PAGE_URL') },
@@ -25,6 +25,7 @@ export const cfg = {
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
               height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
               accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0' },
+  post:     { language: env('POST_LANGUAGE', 'English') },
   maxPerRun: num('MAX_PER_RUN', 1),
   dirs: { out: path.join(ROOT, 'out'), tmp: path.join(ROOT, 'tmp'), data: path.join(ROOT, 'data') },
 };

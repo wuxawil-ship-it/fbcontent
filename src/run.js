@@ -3,7 +3,7 @@ import { ROOT, cfg } from './config.js';
 import { renderCard, closeBrowser } from './render.js';
 import { buildPost } from './ai.js';
 import { fetchImageSet } from './image.js';
-import { pickSource } from './sources.js';
+import { pickSource, fetchArticleText } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
 import { isSeen, markSeen } from './store.js';
 
@@ -52,7 +52,12 @@ async function runOnce({ post }) {
       const [pic, second] = pics;
       console.log(`    image: ${pic.w}x${pic.h}${second ? ` (+inset ${second.w}x${second.h})` : ''}`);
 
-      const ai = await buildPost({ text: item.text, imagePath: pic.file });
+      /* RSS sirf 1-2 line deta hai — poora article milay to caption bohat behtar banti hai */
+      const full = await fetchArticleText(item.link);
+      const text = full.length > item.text.length ? `${item.title}\n\n${full}` : item.text;
+      if (full) console.log(`    article: ${full.length} chars`);
+
+      const ai = await buildPost({ text, imagePath: pic.file });
       if (!ai.usable) { console.log(`    skip: ${ai.reason}`); markSeen(item, { skipped: ai.reason }); continue; }
 
       const file = path.join(cfg.dirs.out, `${stamp()}-${slug(item.title)}.jpg`);

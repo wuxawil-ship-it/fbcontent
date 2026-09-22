@@ -31,6 +31,8 @@ const SCHEMA = {
   propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'caption', 'focus'],
 };
 
+const LANG = cfg.post.language;
+
 const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumhara kaam:
 
 1. FACTS lo, alfaaz nahi. Headline aur caption BILKUL apne words mein likho — source ka
@@ -48,14 +50,65 @@ const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumha
 4. kicker: 1-2 word category, e.g. "World", "Pakistan", "Markets", "Tech".
 5. focus: tasveer mein asal subject (banda/cheez) kahan hai — left/center/right/top/bottom.
    Card tasveer ko crop karta hai, is liye yeh theek batao warna chehra kat jata hai.
-6. caption: Facebook post ka text. 3-5 chhote paragraphs. Pehla para = kya hua.
-   Doosra = zaroori background/context. Aakhri = is ka matlab kya hai (analysis).
-   Neutral, sober tone. Koi hashtag spam nahi, max 3 hashtags aakhir mein.
-   Agar dono taraf ka moaqif hai to dono likho.
+6. caption: Facebook post ka text, **kam se kam 3 aur zyada se zyada 5 paragraphs**.
+   Har paragraph 2-4 jumlon ka. Ek hi lamba block MAT likho.
+   - para 1 = kya hua (facts, numbers, naam)
+   - para 2 = background / context — pehle kya hua tha, yeh ahem kyun hai
+   - para 3 = dono taraf ka moaqif, agar hai
+   - aakhri para = is ka matlab kya hai (sober analysis, hawa mein baat nahi)
+   Neutral tone. Max 3 hashtags aakhir mein, warna bilkul nahi.
+   Agar source text chhota hai to bhi context apni maloomat se bharo, lekin
+   koi aisa FACT mat likho jo source mein nahi hai — general background theek hai.
 7. usable=false karo agar: khabar clear nahi, ya sirf opinion/rumour hai, ya headline
    banane ke liye kaafi facts nahi. Tab reason bhi likho.
 
+OUTPUT LANGUAGE — sab se ahem:
+Ye hidayaat Roman Urdu mein hain, LEKIN tumhara output us zubaan mein NAHI hona.
+kicker, headline aur caption teeno **${LANG}** mein likho. Hidayaat ki zubaan
+output mein bilkul nahi aani chahiye.
+
 Sirf JSON return karo.`;
+
+
+/* Gemini par 429/503 aam hain (demand spikes). Unattended pipeline ke liye
+   retry zaroori hai warna ek spike poora run zaaya kar deta hai. */
+const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function callGemini(body, { tries = 4 } = {}) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.gemini.model}:generateContent`;
+  let last;
+
+  for (let i = 1; i <= tries; i++) {
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.gemini.key },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(90_000),
+      });
+    } catch (e) {
+      last = new Error(`Gemini network: ${e.message}`);
+      if (i === tries) break;
+      await sleep(2000 * 2 ** (i - 1));
+      continue;
+    }
+
+    if (res.ok) return res.json();
+
+    const text = (await res.text()).slice(0, 300);
+    last = new Error(`Gemini ${res.status}: ${text}`);
+    if (!RETRYABLE.has(res.status) || i === tries) break;
+
+    /* server ka apna Retry-After maano, warna exponential backoff + jitter */
+    const wait = Number(res.headers.get('retry-after')) * 1000 ||
+                 2000 * 2 ** (i - 1) + Math.random() * 500;
+    console.warn(`    Gemini ${res.status}, ${Math.round(wait / 1000)}s baad retry (${i}/${tries - 1})`);
+    await sleep(wait);
+  }
+  throw last;
+}
 
 export async function buildPost({ text, imagePath, imageUrl }) {
   need(cfg.gemini.key, 'GEMINI_API_KEY');
@@ -71,19 +124,11 @@ export async function buildPost({ text, imagePath, imageUrl }) {
     parts.push({ text: 'Image mein jo text hai woh bhi padho, lekin us ka wording copy mat karna.' });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.gemini.model}:generateContent`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.gemini.key },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: 'user', parts }],
-      generationConfig: { temperature: 0.6, responseMimeType: 'application/json', responseSchema: SCHEMA },
-    }),
+  const json = await callGemini({
+    systemInstruction: { parts: [{ text: SYSTEM }] },
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature: 0.6, responseMimeType: 'application/json', responseSchema: SCHEMA },
   });
-
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 400)}`);
-  const json = await res.json();
   const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error('Gemini ne khaali jawab diya: ' + JSON.stringify(json).slice(0, 300));
 

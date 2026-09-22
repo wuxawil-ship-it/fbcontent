@@ -87,12 +87,43 @@ lowercase bhejne par reject ho sakta hai.
 **npm 11+:** postinstall scripts block karta hai, is liye Chromium alag se —
 `npx puppeteer browsers install chrome`.
 
+**2026-09-22 — Poori chain live chal gayi (dry-run).**
+RSS → article fetch → Gemini rewrite → card render → caption. Post abhi nahi kiya.
+
+---
+
+## 2026-09-22 ke live test se jo mila
+
+**Gemini 2.5-flash retire ho chuka hai.** API ne 404 diya:
+"no longer available to new users". Ab `gemini-3.6-flash` use ho raha hai.
+Model naam `GEMINI_MODEL` se badal sakte ho — retire hone par yahi error dobara aayega.
+
+**Prompt ki zubaan output mein leak ho gayi thi.** System prompt Roman Urdu mein likha tha,
+to Gemini ne caption bhi Roman Urdu mein likh diya. Ab prompt ke aakhir mein saaf likha hai
+ke output `POST_LANGUAGE` (default English) mein ho. Sabaq: hidayaat ki zubaan aur output ki
+zubaan alag ho to explicitly batana parta hai.
+
+**Gemini par 503 aam hai.** "high demand" — ek test mein lagataar 3 dafa aaya. Ab
+`src/ai.js` mein exponential backoff ke saath 4 tries hain (`Retry-After` header bhi maanta hai).
+Iske bagair ek spike poora run zaaya kar deta.
+
+**RSS ka summary caption ke liye kaafi nahi.** Sky ka description sirf 190 chars ka tha aur
+caption khokhli aa rahi thi ("stakeholders continue to monitor..."). Ab article page se poora
+text uthta hai (4000 chars cap) — caption mein asli numbers aane lage.
+
+**Sky News article pages 403 dete hain** (automated access block). Isay bypass NAHI kiya —
+un par RSS summary hi use hoti hai, caption thori chhoti aati hai. Guardian aur DW se poora
+article milta hai. Jis feed se achi caption chahiye, Guardian behtar hai.
+
+**Card par `FEEDS.SKYNEWS.COM` likha aa raha tha.** Ab hostname → asli naam ka map hai
+(`outletName` in `src/sources.js`) — "Sky News", "The Guardian" waghera.
+
 ---
 
 ## Abhi pending
 
-- [ ] **Gemini API key** — poori chain live test nahi hui (rewrite + caption + focus)
-- [ ] **FB page token** — user khud banayega, post karna live test nahi hua
+- [ ] **FB page token** — user khud banayega; `publishPhoto()` abhi tak live test nahi hua
+- [ ] Guardian ki images 700px hain (968 chahiye) — thori soft lagti hain, behtar source dhoondna
 - [ ] Token ~60 din baad refresh karna hota hai — reminder chahiye
 - [ ] `data/seen.json` deploy par persist karna zaroori hai warna duplicate post honge
 
