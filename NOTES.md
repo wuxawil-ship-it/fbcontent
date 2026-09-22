@@ -183,6 +183,45 @@ dashboard se dobara mil jata hai: App → Settings → Basic → Show.
 
 ---
 
+## Raza Samo se seekhi hui cheezein (2026-09-22)
+
+**Dimensions:** uski asli images check kin — **1080x1350, ratio 0.800**. Hamara card
+bilkul wahi hai. Koi tabdeeli nahi chahiye.
+
+**Red box punchline:** wo kabhi kabhi headline ke neeche laal border wale box mein ek
+teekhi line daalta hai ("RULES FOR THEE, BUT NOT FOR ME"). Ab `punchline` field support
+karti hai — AI sirf tab bhejta hai jab khabar mein asli tazad ho jo facts se sabit ho,
+warna khaali. Style: laal border, lime text.
+
+**Emoji + sawal:** caption mein 1-3 emoji aur aakhir mein ek sawal (comments ke liye).
+
+**Trump focus:** `PRIORITY_KEYWORDS` — jin khabron mein ye alfaaz hon wo qatar mein
+pehle aati hain. Guardian US politics aur NPR politics feeds add kiye.
+
+**Jo NAHI ho sakta:** wo CNN ke logo par laal cross, ya kisi khaas cheez par circle
+lagata hai. Ye har post ke liye alag manual graphic design hai — kaun se logo par,
+kahan, kyun. Isay generalize karna mumkin nahi. Aise post haath se banane parenge.
+
+---
+
+## Feeds ka tajurba (2026-09-22)
+
+| feed | images | article text | note |
+|---|---|---|---|
+| Sky News World | 1920x1080 | ✗ 403 | tasveerein best, caption chhoti |
+| Guardian World | 700x560 | ✓ 4000 | caption best |
+| Guardian US politics | 700x560 | ✓ 4000 | Trump coverage |
+| NPR politics | 1400x787 | ✓ 4000 | dono achay — behtareen combo |
+| DW World | 940x529 (og) | ✓ 4000 | feed mein image nahi hoti |
+| Politico | 2000x1333 | ✗ 403 | **chhor diya** — RSS sirf 29 chars deta hai |
+
+**Ek aur bug mila:** `<article>` ka regex non-greedy tha, to pehle chhote teaser block
+par ruk jata tha aur asal khabar chhoot jati thi. NPR par 0 chars aa rahe the. Ab saare
+`<article>`/`<main>` blocks dekh kar wo chunte hain jisme sab se zyada paragraphs hon —
+NPR 0 se 4000 par aa gaya.
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar
