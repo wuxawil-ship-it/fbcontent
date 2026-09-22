@@ -1,32 +1,5 @@
 [
   {
-    "id": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
-    "title": "Trump v the media – The Latest",
-    "link": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
-    "source": "The Guardian",
-    "publishedAt": 1790096424000,
-    "images": [
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=700&quality=85&auto=format&fit=max&s=54f0f30bec5c2bee8a13214d9d2d3eca",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=460&quality=85&auto=format&fit=max&s=44430dc74b7aa35d1da0c7e78b337286",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=140&quality=85&auto=format&fit=max&s=dce76174e9bc4f33bbb35b25e515a9ea",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=5f2d48f8615ef67dfc2476ede15cd3d1"
-    ],
-    "headline": [
-      {
-        "t": "MAJOR TV NETWORKS BOYCOTT",
-        "c": "white"
-      },
-      {
-        "t": "TRUMP ADMINISTRATION PRESS POOL",
-        "c": "accent"
-      }
-    ],
-    "punchline": "",
-    "caption": "Major news organizations, including CNN, MS Now, and Politico, have initiated a boycott of the White House press pool coverage. This collective action follows the administration's decision to deny these specific outlets access to the White House over disagreements regarding their news coverage.\n\nTensions between the Trump administration and mainstream media have intensified, marking a significant escalation in the ongoing conflict between the press and the executive branch. This move by major networks represents one of the most substantial challenges to the current administration's media relations policy.\n\nThe administration maintains that access is managed based on coverage standards, while journalists argue that the restriction of specific outlets threatens the principle of a free and open press. The situation has prompted a wider debate on the role of media in holding the executive branch accountable.\n\nAs the standoff continues, the public's access to independent reporting from within the White House remains limited. Can a functional democracy operate effectively when the government and the press are in an open boycott? ⚖️\n\n#Trump #Media #WhiteHouse",
-    "kicker": "Media",
-    "focus": "center"
-  },
-  {
     "id": "https://www.theguardian.com/us-news/2026/sep/22/aoc-senate-election-chuck-schumer",
     "title": "AOC refuses to rule out run against Senate leader Chuck Schumer",
     "link": "https://www.theguardian.com/us-news/2026/sep/22/aoc-senate-election-chuck-schumer",
@@ -78,6 +51,34 @@
     "punchline": "Promoting financial literacy after settling crypto fraud charges.",
     "caption": "The US Department of Defense recently hosted social media personalities Jake and Logan Paul to address military personnel at the Pentagon. The visit included a motivational speech aimed at troops, sparking criticism from observers regarding the seriousness of the current administration's approach to national policy.\n\nThis development follows ongoing concerns over the prolonged military engagement involving Iran and rising national debt. Critics, including former officials, have questioned the appropriateness of involving internet celebrities in official military and treasury discussions while the country faces significant geopolitical and economic challenges.\n\nWhile the Paul brothers maintained that the visit was a meaningful experience, their involvement has drawn scrutiny due to their past legal entanglements involving crypto promotions and their lack of traditional public service experience. Secretary of the Treasury Scott Bessent also met with Jake Paul to discuss youth financial empowerment.\n\nThe event highlights a growing trend of integrating non-traditional figures into high-level government discourse. Does the use of social media influencers in official government capacities undermine the gravity of public office? 🇺🇸\n\n#Pentagon #JakePaul #USPolitics",
     "kicker": "USA",
+    "focus": "center",
+    "tries": 1
+  },
+  {
+    "id": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
+    "title": "Trump v the media – The Latest",
+    "link": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
+    "source": "The Guardian",
+    "publishedAt": 1790096424000,
+    "images": [
+      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=700&quality=85&auto=format&fit=max&s=54f0f30bec5c2bee8a13214d9d2d3eca",
+      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=460&quality=85&auto=format&fit=max&s=44430dc74b7aa35d1da0c7e78b337286",
+      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=140&quality=85&auto=format&fit=max&s=dce76174e9bc4f33bbb35b25e515a9ea",
+      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=5f2d48f8615ef67dfc2476ede15cd3d1"
+    ],
+    "headline": [
+      {
+        "t": "MAJOR TV NETWORKS BOYCOTT",
+        "c": "white"
+      },
+      {
+        "t": "TRUMP ADMINISTRATION PRESS POOL",
+        "c": "accent"
+      }
+    ],
+    "punchline": "",
+    "caption": "Major news organizations, including CNN, MS Now, and Politico, have initiated a boycott of the White House press pool coverage. This collective action follows the administration's decision to deny these specific outlets access to the White House over disagreements regarding their news coverage.\n\nTensions between the Trump administration and mainstream media have intensified, marking a significant escalation in the ongoing conflict between the press and the executive branch. This move by major networks represents one of the most substantial challenges to the current administration's media relations policy.\n\nThe administration maintains that access is managed based on coverage standards, while journalists argue that the restriction of specific outlets threatens the principle of a free and open press. The situation has prompted a wider debate on the role of media in holding the executive branch accountable.\n\nAs the standoff continues, the public's access to independent reporting from within the White House remains limited. Can a functional democracy operate effectively when the government and the press are in an open boycott? ⚖️\n\n#Trump #Media #WhiteHouse",
+    "kicker": "Media",
     "focus": "center",
     "tries": 1
   }
