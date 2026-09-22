@@ -36,7 +36,7 @@ Nayi machine par yahi dobara karna ho to: nodejs.org se darwin-arm64 tarball, ch
 ```bash
 npm install
 npx puppeteer browsers install chrome   # npm 11+ postinstall block kar deta hai, is liye alag
-cp .env.example .env
+cp -n .env.example .env   # -n zaroori: mojooda .env overwrite na ho
 ```
 
 ## 3. `.env` bharo
