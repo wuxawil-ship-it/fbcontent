@@ -40,6 +40,7 @@ async function demo() {
 /* ---------------------------------------------------------- one pass */
 async function runOnce({ post, open }) {
   const made = [];
+  let catchup = 1;
 
   const wiped = cleanup();
   if (wiped) console.log(`  ${wiped} purani files saaf kin`);
@@ -65,7 +66,15 @@ async function runOnce({ post, open }) {
                   `(har ~${Math.round(pace)} min ka pace)`);
       return;
     }
-    console.log(`  aaj ${done}/${target} posts — pace theek hai, aage barhte hain`);
+    /* GitHub ka cron ticks girata hai (dekha gaya: 5 ghante mein 1 run).
+       Is liye jab run hota hai to pichre hue kaam ka hissa bhi pakro. */
+    const elapsed = 1440 - minsLeft;
+    const expected = Math.floor(target * (elapsed / 1440));
+    const behind = Math.max(0, expected - done);
+    catchup = Math.min(cfg.post.catchupMax, 1 + behind);
+
+    console.log(`  aaj ${done}/${target} (is waqt tak ${expected} hone chahiye the) — ` +
+                `is run mein ${catchup} post`);
   }
   const items = await pickSource(opt('source'))();
   console.log(`  ${items.length} items mile`);
@@ -80,7 +89,11 @@ async function runOnce({ post, open }) {
   const unseen = items.filter(i => !isSeen(i));
   if (cfg.post.priority.length) unseen.sort((a, b) => score(b) - score(a));
 
-  const fresh = unseen.slice(0, Number(opt('max', cfg.maxPerRun)));
+  const want = args.includes('--max') ? Number(opt('max')) : Math.max(cfg.maxPerRun, catchup);
+  /* Zyada candidates rakho: agar ek khabar par Gemini fail ho jaye to
+     poora run zaaya na ho, agli khabar par chale jao. */
+  const fresh = unseen.slice(0, want + 4);
+  let sent = 0;
   if (fresh.length && cfg.post.priority.length) {
     const s0 = score(fresh[0]);
     if (s0) console.log(`  priority match (${s0} keyword) — ye khabar pehle`);
@@ -88,6 +101,7 @@ async function runOnce({ post, open }) {
   if (!fresh.length) return console.log('  kuch naya nahi.');
 
   for (const item of fresh) {
+    if (sent >= want) break;
     console.log(`\n  → ${item.title}`);
     try {
       /* article pehle: us se poora text bhi milta hai aur og:image bhi */
@@ -132,16 +146,27 @@ async function runOnce({ post, open }) {
         console.log(`    caption: ${path.basename(txt)}`);
         console.log(caption.split('\n').map(l => '    │ ' + l).join('\n'));
         made.push({ image: card.file, caption: txt, title: item.title });
+        sent++;
         continue; /* dry-run mein seen mark nahi karte, taake dobara try ho sake */
       }
 
       const res = await publishPhoto({ imagePath: card.file, caption });
       console.log(`    ✓ posted: ${res.url}`);
       markSeen(item, { posted: res.id });
+      sent++;
+
+      /* Ek hi run ki posts feed mein ek saath na tapken */
+      if (sent < want && cfg.post.spacingSeconds) {
+        console.log(`    ${cfg.post.spacingSeconds}s ruk rahe hain agli post se pehle`);
+        await new Promise(r => setTimeout(r, cfg.post.spacingSeconds * 1000));
+      }
     } catch (e) {
-      console.error(`    ✗ ${e.message}`);
+      console.error(`    ✗ ${e.message.split('\n')[0]}`);
+      console.log('    agli khabar par ja rahe hain');
     }
   }
+
+  if (post && !sent) console.log('\n  is run mein kuch post nahi hua');
 
   if (made.length && !post) {
     console.log(`\n  ${made.length} post tayyar — ${cfg.dirs.out}`);

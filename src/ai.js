@@ -83,44 +83,56 @@ output mein bilkul nahi aani chahiye.
 Sirf JSON return karo.`;
 
 
-/* Gemini par 429/503 aam hain (demand spikes). Unattended pipeline ke liye
-   retry zaroori hai warna ek spike poora run zaaya kar deta hai. */
-const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
+/* Free tier par har model ka apna kota hai: 20 requests/din/model.
+   Is liye:
+   - 429 (kota khatam) par usi model ko dobara try karna bekaar hai — agle model par jao
+   - 503/500 (server par load) par thori der baad usi model ko dobara try karo
+   Models ki list GEMINI_MODELS se aati hai. */
+const OVERLOADED = new Set([408, 500, 502, 503, 504]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function callGemini(body, { tries = 4 } = {}) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.gemini.model}:generateContent`;
+async function tryModel(model, body, tries) {
   let last;
-
   for (let i = 1; i <= tries; i++) {
     let res;
     try {
-      res = await fetch(url, {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.gemini.key },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(90_000),
       });
     } catch (e) {
-      last = new Error(`Gemini network: ${e.message}`);
+      last = new Error(`network: ${e.message}`);
       if (i === tries) break;
-      await sleep(2000 * 2 ** (i - 1));
+      await sleep(2000 * i);
       continue;
     }
 
-    if (res.ok) return res.json();
+    if (res.ok) return { ok: true, json: await res.json() };
 
-    const text = (await res.text()).slice(0, 300);
-    last = new Error(`Gemini ${res.status}: ${text}`);
-    if (!RETRYABLE.has(res.status) || i === tries) break;
+    const text = (await res.text()).slice(0, 200);
+    last = new Error(`${res.status} ${text.replace(/\s+/g, ' ').slice(0, 90)}`);
 
-    /* server ka apna Retry-After maano, warna exponential backoff + jitter */
-    const wait = Number(res.headers.get('retry-after')) * 1000 ||
-                 2000 * 2 ** (i - 1) + Math.random() * 500;
-    console.warn(`    Gemini ${res.status}, ${Math.round(wait / 1000)}s baad retry (${i}/${tries - 1})`);
+    if (res.status === 429) return { ok: false, quota: true, error: last };
+    if (!OVERLOADED.has(res.status) || i === tries) break;
+
+    const wait = 2000 * 2 ** (i - 1) + Math.random() * 500;
+    console.warn(`    ${model}: ${res.status}, ${Math.round(wait / 1000)}s baad dobara`);
     await sleep(wait);
   }
-  throw last;
+  return { ok: false, error: last };
+}
+
+async function callGemini(body) {
+  let last;
+  for (const model of cfg.gemini.models) {
+    const r = await tryModel(model, body, 2);
+    if (r.ok) return r.json;
+    last = r.error;
+    console.warn(`    ${model}: ${r.quota ? 'kota khatam' : 'nahi chala'} — agla model`);
+  }
+  throw new Error(`koi Gemini model nahi chala. Aakhri: ${last?.message}`);
 }
 
 export async function buildPost({ text, imagePath, imageUrl }) {

@@ -17,7 +17,11 @@ const env = (k, d = '') => (process.env[k] ?? d).trim();
 const num = (k, d) => Number(env(k, String(d))) || d;
 
 export const cfg = {
-  gemini:   { key: env('GEMINI_API_KEY'), model: env('GEMINI_MODEL', 'gemini-3.6-flash') },
+  /* free tier: 20 req/din/model — is liye kai models ki qatar */
+  gemini:   { key: env('GEMINI_API_KEY'),
+              models: env('GEMINI_MODELS',
+                'gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite'
+              ).split(',').map(m => m.trim()).filter(Boolean) },
   rss:      { feeds: env('RSS_FEEDS').split(',').map(s => s.trim()).filter(Boolean) },
   apify:    { token: env('APIFY_TOKEN'), actor: env('APIFY_ACTOR', 'apify~facebook-posts-scraper'),
               pageUrl: env('APIFY_PAGE_URL') },
@@ -30,6 +34,8 @@ export const cfg = {
               perDay: num('POSTS_PER_DAY', 18),
               minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */
               keepDays: num('KEEP_DAYS', 7),
+              catchupMax: num('CATCHUP_MAX', 3),
+              spacingSeconds: num('SPACING_SECONDS', 90),
               priority: env('PRIORITY_KEYWORDS').split(',').map(k => k.trim().toLowerCase()).filter(Boolean) },
   maxPerRun: num('MAX_PER_RUN', 1),
   dirs: { out: path.join(ROOT, 'out'), tmp: path.join(ROOT, 'tmp'), data: path.join(ROOT, 'data') },

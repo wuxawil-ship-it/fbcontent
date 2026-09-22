@@ -222,6 +222,25 @@ NPR 0 se 4000 par aa gaya.
 
 ---
 
+## Do asli rukawatein (2026-09-22 shaam)
+
+**1. Gemini free tier = 20 requests PER DIN PER MODEL.**
+Error 429 ki tafseel se pata chala: `GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20`.
+18 posts chahiye aur har retry bhi kota kharch karta hai — 20 mein nahi ho sakta.
+Filhal `GEMINI_MODELS` se kai models ki qatar hai (har model ka apna 20 ka kota, 4 models = ~80/din).
+429 par usi model ko dobara try nahi karte (bekaar hai), seedha agle model par jate hain;
+503 par thori der baad usi model ko dobara.
+**Asli hal: billing on karna.** Rotation waqti bandobast hai.
+
+**2. GitHub ka cron ticks girata hai.**
+`*/30` laga hua hai lekin 5.5 ghante mein sirf **1** scheduled run hua (hona chahiye tha ~11).
+GitHub schedules ki koi guarantee nahi deta, khaas kar tez crons par.
+Is ka jawab `CATCHUP_MAX`: jab run hota hai to dekhta hai ke is waqt tak kitni posts honi
+chahiye thin, aur pichra hua kaam pakarne ke liye ek run mein 3 tak posts karta hai
+(`SPACING_SECONDS=90` ke waqfe se, taake feed mein ek saath na tapken).
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar

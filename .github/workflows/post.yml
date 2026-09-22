@@ -15,7 +15,7 @@ concurrency:
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     env:
       TZ: Asia/Karachi
@@ -24,7 +24,7 @@ jobs:
       FB_PAGE_ID:     ${{ secrets.FB_PAGE_ID }}
       FB_PAGE_TOKEN:  ${{ secrets.FB_PAGE_TOKEN }}
       # --- baqi settings: secret nahi, yahin badal sakte ho ---
-      GEMINI_MODEL: gemini-3.6-flash
+      GEMINI_MODELS: 'gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite'
       POST_LANGUAGE: English
       BRAND_HANDLE: '@safucrypto'
       BRAND_ACCENT: '#31D6E8'
@@ -33,6 +33,8 @@ jobs:
       CARD_INSET: '1'
       POSTS_PER_DAY: '18'
       MIN_GAP_MINUTES: '20'
+      CATCHUP_MAX: '3'
+      SPACING_SECONDS: '90'
       MAX_PER_RUN: '1'
       FB_API_VERSION: v26.0
       PRIORITY_KEYWORDS: 'trump,white house,maga,republican,democrat,congress,supreme court,pentagon,elon musk'
