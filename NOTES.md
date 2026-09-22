@@ -118,12 +118,49 @@ article milta hai. Jis feed se achi caption chahiye, Guardian behtar hai.
 **Card par `FEEDS.SKYNEWS.COM` likha aa raha tha.** Ab hostname → asli naam ka map hai
 (`outletName` in `src/sources.js`) — "Sky News", "The Guardian" waghera.
 
+**2026-09-22 — BARI RUKAWAT: Safu Crypto Facebook "Page" nahi hai.**
+
+Graph API Explorer mein `me/accounts` khaali aaya. `me?fields=id,name` ne bataya ke
+personal profile **"Malik Muzamil"** hai (id 122141056341211779), Safu Crypto nahi.
+Decisive test: OAuth dialog "Opt in to current Pages only" ke baad **page picker screen
+aayi hi nahi** — seedha "Malik Muzamil has been connected" par chala gaya. Facebook wo
+screen sirf tab dikhata hai jab account ke paas koi Page ho.
+
+Matlab: Safu Crypto ek **profile hai professional mode mein**, Page nahi. Facebook
+profiles par Graph API se post karne ki ijazat deta hi nahi — koi setting, koi permission,
+koi token isay theek nahi kar sakta. `src/facebook.js` ka code theek hai, bas us ke liye
+Page chahiye jo maujood nahi.
+
+Raaste:
+- **A (chalu hai):** semi-automation — script card + caption `out/` mein banati hai,
+  upload manual. `node src/run.js review` folder bhi khol deta hai.
+- **B:** asli Page banana — poori automation chalegi, lekin followers zero se aur
+  monetization dobara qualify karni paregi. Abhi 24,787 engagement chal raha hai, mehnga sauda.
+- **C:** Professional dashboard → All tools mein "Create a Page"/"Switch to Page" dhoondna —
+  Meta kabhi kabhi followers ke saath migration deta hai. **Abhi check nahi kiya.**
+
+---
+
+## Image quality ke faisle
+
+**Feed ki image pehle, og:image baad mein.** og:image bari hoti hai (Guardian 1200x630 vs
+feed 700x560) LEKIN us par aksar publisher ka logo baked hota hai — Guardian ka "The Guardian"
+box seedha hamare card par aa gaya tha. Doosre ka logo apne brand ke card par bura lagta hai,
+is liye chhoti magar saaf image behtar hai.
+
+**Guardian se 700px se bari nahi mil sakti.** URL mein `width=700` ko 1200 karne par **401** —
+signature width ko bhi cover karti hai.
+
+**DW ke feed mein tasveer hoti hi nahi** — us ke liye og:image hi waahid rasta hai
+(940x529). Us par DW ki branding ho sakti hai.
+
 ---
 
 ## Abhi pending
 
-- [ ] **FB page token** — user khud banayega; `publishPhoto()` abhi tak live test nahi hua
-- [ ] Guardian ki images 700px hain (968 chahiye) — thori soft lagti hain, behtar source dhoondna
+- [ ] **Auto-post block hai** — Safu Crypto Page nahi hai (upar dekho). `publishPhoto()` code likha hua hai lekin kabhi chala nahi
+- [ ] Professional dashboard → All tools mein Page migration ka option check karna hai
+- [ ] Guardian ki images 700px par atki hain (card 968 chahta hai) — thori soft rehti hain
 - [ ] Token ~60 din baad refresh karna hota hai — reminder chahiye
 - [ ] `data/seen.json` deploy par persist karna zaroori hai warna duplicate post honge
 
