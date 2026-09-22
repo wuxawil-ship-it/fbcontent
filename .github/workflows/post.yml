@@ -1,0 +1,75 @@
+name: post
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'      # har 30 min check, post pace ke hisaab se
+  workflow_dispatch:            # Actions tab se haath se bhi chala sakte ho
+
+permissions:
+  contents: write               # data/seen.json wapas commit karne ke liye
+
+concurrency:
+  group: post                   # do run ek saath nahi, warna duplicate post ho sakti hai
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TZ: Asia/Karachi
+      # --- secrets (repo Settings -> Secrets and variables -> Actions) ---
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      FB_PAGE_ID:     ${{ secrets.FB_PAGE_ID }}
+      FB_PAGE_TOKEN:  ${{ secrets.FB_PAGE_TOKEN }}
+      # --- baqi settings: secret nahi, yahin badal sakte ho ---
+      GEMINI_MODEL: gemini-3.6-flash
+      POST_LANGUAGE: English
+      BRAND_HANDLE: '@safucrypto'
+      BRAND_ACCENT: '#31D6E8'
+      CARD_TEMPLATE: classic
+      CARD_INSET: '1'
+      POSTS_PER_DAY: '18'
+      MIN_GAP_MINUTES: '20'
+      MAX_PER_RUN: '1'
+      FB_API_VERSION: v26.0
+      PRIORITY_KEYWORDS: 'trump,white house,maga,republican,democrat,congress,supreme court,pentagon,elon musk'
+      RSS_FEEDS: 'https://feeds.skynews.com/feeds/rss/world.xml,https://www.theguardian.com/world/rss,https://www.theguardian.com/us-news/us-politics/rss,https://feeds.npr.org/1014/rss.xml,https://rss.dw.com/rdf/rss-en-world'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pehle sasta check: post ka waqt hua ya nahi. Na hua to npm/Chromium
+      # install kiye bagair hi nikal jao — Actions minutes bachte hain.
+      - id: gate
+        run: node .github/pace-check.mjs >> "$GITHUB_OUTPUT"
+
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: chromium-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.gate.outputs.go == 'true'
+        run: |
+          npm ci --ignore-scripts
+          npx puppeteer browsers install chrome
+
+      - if: steps.gate.outputs.go == 'true'
+        run: node src/run.js run --post
+
+      - if: steps.gate.outputs.go == 'true'
+        run: |
+          git config user.name  "safucrypto bot"
+          git config user.email "noreply@github.com"
+          git add data/seen.json
+          git diff --staged --quiet || git commit -m "posted $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase --autostash origin main || true
+          git push origin main

@@ -7,7 +7,7 @@ import { buildPost } from './ai.js';
 import { fetchImageSet } from './image.js';
 import { pickSource, fetchArticleMeta } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
-import { isSeen, markSeen } from './store.js';
+import { isSeen, markSeen, lastPostedAt, postsToday, cleanup } from './store.js';
 
 const args = process.argv.slice(2);
 const cmd = args[0] || 'demo';
@@ -40,10 +40,51 @@ async function demo() {
 /* ---------------------------------------------------------- one pass */
 async function runOnce({ post, open }) {
   const made = [];
+
+  const wiped = cleanup();
+  if (wiped) console.log(`  ${wiped} purani files saaf kin`);
+
+  /* Din bhar mein POSTS_PER_DAY posts, barabar phaili hui.
+     Check har 30 min hota hai lekin post tab hi jab pace ijazat de. */
+  if (post) {
+    const target = cfg.post.perDay;
+    const done = postsToday();
+    if (done >= target) {
+      console.log(`  aaj ki ${target} posts poori ho chukin — kal phir`);
+      return;
+    }
+
+    const now = new Date();
+    const endOfDay = new Date(now).setHours(23, 59, 59, 999);
+    const minsLeft = Math.max(1, (endOfDay - now) / 60_000);
+    const pace = Math.max(cfg.post.minGapMinutes, minsLeft / (target - done));
+    const since = (Date.now() - lastPostedAt()) / 60_000;
+
+    if (since < pace) {
+      console.log(`  aaj ${done}/${target} — agli post ${Math.round(pace - since)} min baad ` +
+                  `(har ~${Math.round(pace)} min ka pace)`);
+      return;
+    }
+    console.log(`  aaj ${done}/${target} posts — pace theek hai, aage barhte hain`);
+  }
   const items = await pickSource(opt('source'))();
   console.log(`  ${items.length} items mile`);
 
-  const fresh = items.filter(i => !isSeen(i)).slice(0, Number(opt('max', cfg.maxPerRun)));
+  /* Kuch mauzu zyada chalte hain (Trump/US politics). Jin khabron mein ye
+     keywords hon unhe pehle uthao — baqi phir bhi qatar mein rehti hain. */
+  const score = i => {
+    const hay = `${i.title} ${i.text}`.toLowerCase();
+    return cfg.post.priority.reduce((n, k) => n + (hay.includes(k) ? 1 : 0), 0);
+  };
+
+  const unseen = items.filter(i => !isSeen(i));
+  if (cfg.post.priority.length) unseen.sort((a, b) => score(b) - score(a));
+
+  const fresh = unseen.slice(0, Number(opt('max', cfg.maxPerRun)));
+  if (fresh.length && cfg.post.priority.length) {
+    const s0 = score(fresh[0]);
+    if (s0) console.log(`  priority match (${s0} keyword) — ye khabar pehle`);
+  }
   if (!fresh.length) return console.log('  kuch naya nahi.');
 
   for (const item of fresh) {
@@ -74,7 +115,7 @@ async function runOnce({ post, open }) {
       const file = path.join(cfg.dirs.out, `${stamp()}-${slug(item.title)}.jpg`);
       const card = await renderCard({
         template: opt('template', cfg.card.template),
-        headline: ai.headline, images: [pic.file],
+        headline: ai.headline, punchline: ai.punchline, images: [pic.file],
         inset: second ? { image: second.file, ring: 'white' } : null,
         focus: ai.focus, accent: cfg.card.accent,
         kicker: ai.kicker, brand: cfg.card.brand,

@@ -26,10 +26,12 @@ const SCHEMA = {
     },
     /* array is liye ke model \n\n daalna bhool jata hai — wall of text ban jati thi */
     caption:  { type: 'ARRAY', items: { type: 'STRING' } },
+    /* khaali string bhi theek — har khabar mein punchline nahi hoti */
+    punchline: { type: 'STRING' },
     focus:    { type: 'STRING', format: 'enum', enum: FOCUS },
   },
-  required: ['usable', 'headline', 'caption', 'kicker', 'focus'],
-  propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'caption', 'focus'],
+  required: ['usable', 'headline', 'caption', 'kicker', 'focus', 'punchline'],
+  propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'punchline', 'caption', 'focus'],
 };
 
 const LANG = cfg.post.language;
@@ -51,16 +53,26 @@ const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumha
 4. kicker: 1-2 word category, e.g. "World", "Pakistan", "Markets", "Tech".
 5. focus: tasveer mein asal subject (banda/cheez) kahan hai — left/center/right/top/bottom.
    Card tasveer ko crop karta hai, is liye yeh theek batao warna chehra kat jata hai.
-6. caption: paragraphs ka ARRAY — har element ek paragraph. 3 se 5 elements.
+6. punchline: card par red box mein ek chhoti teekhi line (zyada se zyada 8 words).
+   SIRF tab likho jab khabar mein koi asli tazad ya munafiqat ho jo FACTS se sabit ho —
+   jaise "Rules for thee, but not for me." Har khabar mein aisi baat nahi hoti;
+   na ho to khaali string "" bhejo. Jhoothi ya bina saboot wali baat kabhi nahi.
+
+7. caption: paragraphs ka ARRAY — har element ek paragraph. 3 se 5 elements.
    Har paragraph 2-4 jumlon ka. Ek hi lamba element MAT bhejo.
    - para 1 = kya hua (facts, numbers, naam)
    - para 2 = background / context — pehle kya hua tha, yeh ahem kyun hai
    - para 3 = dono taraf ka moaqif, agar hai
    - aakhri para = is ka matlab kya hai (sober analysis, hawa mein baat nahi)
-   Neutral tone. Max 3 hashtags aakhir mein, warna bilkul nahi.
+   Neutral tone — facts sansani-khez nahi banao.
+   - Aakhri paragraph ke aakhir mein **ek sawal** jo log comments mein jawab dena chahen.
+     Sawal khabar se juda ho, bharti ka na ho.
+   - 1-3 emoji tak istemal kar sakte ho jahan waqai fit hon (🚨 breaking, 📉 giravat,
+     ⚖️ adalat, 🌍 duniya). Har paragraph par emoji MAT lagao, sasta lagta hai.
+   - Max 3 hashtags aakhir mein.
    Agar source text chhota hai to bhi context apni maloomat se bharo, lekin
    koi aisa FACT mat likho jo source mein nahi hai — general background theek hai.
-7. usable=false karo agar: khabar clear nahi, ya sirf opinion/rumour hai, ya headline
+8. usable=false karo agar: khabar clear nahi, ya sirf opinion/rumour hai, ya headline
    banane ke liye kaafi facts nahi. Tab reason bhi likho.
 
 OUTPUT LANGUAGE — sab se ahem:
@@ -144,6 +156,7 @@ export async function buildPost({ text, imagePath, imageUrl }) {
     seg.c !== 'white' && ++colored > 2 ? { ...seg, c: 'white' } : seg);
 
   out.focus = FOCUS.includes(out.focus) ? out.focus : 'center';
+  out.punchline = String(out.punchline || '').trim().slice(0, 70);
 
   /* array -> text. Model kabhi string bhi bhej deta hai, dono handle karo. */
   const paras = Array.isArray(out.caption) ? out.caption : String(out.caption || '').split(/\n{2,}/);

@@ -80,6 +80,15 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:24px}
 #card.band .headline{text-align:left}
 #card.band .footer{padding-top:24px}
 
+/* ---- Punchline: red box mein sharp line (reference: "RULES FOR THEE, BUT NOT FOR ME") ---- */
+.punch{
+  align-self:center;flex:0 0 auto;margin-top:26px;
+  border:5px solid var(--red);border-radius:14px;padding:16px 26px 13px;
+  font-weight:900;text-transform:uppercase;letter-spacing:-0.005em;line-height:1.1;
+  color:var(--lime);text-align:center;max-width:100%;
+}
+#card.overlay .punch, #card.band .punch{align-self:flex-start;text-align:left}
+
 /* ---- Circular inset: main photo ke upar chhoti gol tasveer (related incident) ---- */
 .inset{position:absolute;overflow:hidden;border-radius:50%;background:#111;
   width:310px;height:310px;left:var(--pad);top:var(--pad);

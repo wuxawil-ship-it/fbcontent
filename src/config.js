@@ -25,7 +25,11 @@ export const cfg = {
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
               height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
               accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0' },
-  post:     { language: env('POST_LANGUAGE', 'English') },
+  post:     { language: env('POST_LANGUAGE', 'English'),
+              perDay: num('POSTS_PER_DAY', 18),
+              minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */
+              keepDays: num('KEEP_DAYS', 7),
+              priority: env('PRIORITY_KEYWORDS').split(',').map(k => k.trim().toLowerCase()).filter(Boolean) },
   maxPerRun: num('MAX_PER_RUN', 1),
   dirs: { out: path.join(ROOT, 'out'), tmp: path.join(ROOT, 'tmp'), data: path.join(ROOT, 'data') },
 };

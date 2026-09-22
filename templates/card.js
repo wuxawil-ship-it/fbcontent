@@ -51,7 +51,10 @@
   }
 
   function layout(d) {
-    const head = `<div class="headbox"><div class="headline" id="hl">${headlineHTML(d.headline)}</div></div>`;
+    const punch = d.punchline
+      ? `<div class="punch" id="pl">${esc(String(d.punchline).trim())}</div>` : '';
+    const head = `<div class="headbox"><div class="headline" id="hl">${headlineHTML(d.headline)}</div></div>`
+      + punch;
     const foot = d.footer === false ? '' :
       `<div class="footer"><span class="handle">${esc(d.brand || '')}</span><span>${esc(d.footer || '')}</span></div>`;
     const kick = d.kicker ? `<div><span class="kicker">${esc(d.kicker)}</span></div>` : '';
@@ -87,6 +90,14 @@
       img.complete ? img.decode().catch(() => {}) :
         new Promise(res => { img.onload = img.onerror = res; }).then(() => img.decode().catch(() => {}))
     ));
+
+    /* punchline pehle fit karo — wo headline ki jagah kaat leta hai */
+    const pl = card.querySelector('#pl');
+    if (pl) {
+      pl.style.fontSize = Math.round(d.width * 0.042) + 'px';
+      while (pl.scrollWidth > pl.clientWidth + 1 && parseInt(pl.style.fontSize) > 22)
+        pl.style.fontSize = (parseInt(pl.style.fontSize) - 1) + 'px';
+    }
 
     const hl = card.querySelector('#hl');
     const box = hl.parentElement;

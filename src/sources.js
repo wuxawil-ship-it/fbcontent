@@ -83,15 +83,25 @@ export async function fetchArticleMeta(url, { max = 4000 } = {}) {
     const image = meta('og:image') || meta('twitter:image') || '';
 
     html = html.replace(/<(script|style|nav|footer|aside|form|figure)[\s\S]*?<\/\1>/gi, ' ');
-    const body = html.match(/<article[\s\S]*?<\/article>/i)?.[0]
-              || html.match(/<main[\s\S]*?<\/main>/i)?.[0]
-              || html;
 
-    const paras = [...body.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    const paragraphs = block => [...block.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
       .map(m => strip(m[1]))
       .filter(t => t.length > 60);          /* nav/caption/boilerplate chhoti hoti hain */
 
-    return { text: paras.join('\n\n').slice(0, max), image };
+    /* <article>/<main> ka regex non-greedy hai, to pehla chhota teaser block match
+       ho jata tha aur asal khabar chhoot jati thi. Isliye saare candidates dekh kar
+       wo chunte hain jisme sab se zyada paragraphs hon. */
+    const blocks = [
+      ...html.matchAll(/<article[\s\S]*?<\/article>/gi),
+      ...html.matchAll(/<main[\s\S]*?<\/main>/gi),
+    ].map(m => m[0]);
+    blocks.push(html);
+
+    const best = blocks
+      .map(b => paragraphs(b))
+      .reduce((a, b) => (b.length > a.length ? b : a), []);
+
+    return { text: best.join('\n\n').slice(0, max), image };
   } catch { return empty; }
 }
 
