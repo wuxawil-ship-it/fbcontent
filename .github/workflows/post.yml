@@ -24,7 +24,7 @@ jobs:
       FB_PAGE_ID:     ${{ secrets.FB_PAGE_ID }}
       FB_PAGE_TOKEN:  ${{ secrets.FB_PAGE_TOKEN }}
       # --- baqi settings: secret nahi, yahin badal sakte ho ---
-      GEMINI_MODELS: 'gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite'
+      GEMINI_MODELS: 'gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite,gemini-3.1-flash-lite-preview,gemini-flash-latest'
       POST_LANGUAGE: English
       BRAND_HANDLE: '@safucrypto'
       BRAND_ACCENT: '#31D6E8'
@@ -36,6 +36,8 @@ jobs:
       CATCHUP_MAX: '3'
       SPACING_SECONDS: '90'
       MAX_PER_RUN: '1'
+      BATCH_SIZE: '6'
+      QUEUE_FLOOR: '2'
       FB_API_VERSION: v26.0
       PRIORITY_KEYWORDS: 'trump,white house,maga,republican,democrat,congress,supreme court,pentagon,elon musk'
       RSS_FEEDS: 'https://feeds.skynews.com/feeds/rss/world.xml,https://www.theguardian.com/world/rss,https://www.theguardian.com/us-news/us-politics/rss,https://feeds.npr.org/1014/rss.xml,https://rss.dw.com/rdf/rss-en-world'
@@ -72,7 +74,7 @@ jobs:
         run: |
           git config user.name  "safucrypto bot"
           git config user.email "noreply@github.com"
-          git add data/seen.json
+          git add data/seen.json data/queue.json
           git diff --staged --quiet || git commit -m "posted $(date -u +%Y-%m-%dT%H:%MZ)"
           git pull --rebase --autostash origin main || true
           git push origin main

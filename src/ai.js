@@ -6,7 +6,7 @@ const FOCUS = ['left', 'center', 'right', 'top', 'bottom'];
 
 /* Gemini ka Schema ek protobuf hai — type ke naam UPPERCASE enum names hain,
    lowercase bhejne par request reject ho sakti hai. */
-const SCHEMA = {
+const POST_SCHEMA = {
   type: 'OBJECT',
   properties: {
     usable:   { type: 'BOOLEAN' },
@@ -32,6 +32,23 @@ const SCHEMA = {
   },
   required: ['usable', 'headline', 'caption', 'kicker', 'focus', 'punchline'],
   propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'punchline', 'caption', 'focus'],
+};
+
+/* Batch: ek hi request mein kai khabrein. Free tier par 20 requests/din/model hai,
+   is liye har khabar ke liye alag request bhejna chal hi nahi sakta. */
+const BATCH_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    posts: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: { index: { type: 'INTEGER' }, ...POST_SCHEMA.properties },
+        required: ['index', ...POST_SCHEMA.required],
+      },
+    },
+  },
+  required: ['posts'],
 };
 
 const LANG = cfg.post.language;
@@ -127,7 +144,7 @@ async function tryModel(model, body, tries) {
 async function callGemini(body) {
   let last;
   for (const model of cfg.gemini.models) {
-    const r = await tryModel(model, body, 2);
+    const r = await tryModel(model, body, 3);
     if (r.ok) return r.json;
     last = r.error;
     console.warn(`    ${model}: ${r.quota ? 'kota khatam' : 'nahi chala'} — agla model`);
@@ -152,12 +169,15 @@ export async function buildPost({ text, imagePath, imageUrl }) {
   const json = await callGemini({
     systemInstruction: { parts: [{ text: SYSTEM }] },
     contents: [{ role: 'user', parts }],
-    generationConfig: { temperature: 0.6, responseMimeType: 'application/json', responseSchema: SCHEMA },
+    generationConfig: { temperature: 0.6, responseMimeType: 'application/json', responseSchema: POST_SCHEMA },
   });
   const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error('Gemini ne khaali jawab diya: ' + JSON.stringify(json).slice(0, 300));
 
-  const out = JSON.parse(raw);
+  return normalise(JSON.parse(raw));
+}
+
+function normalise(out) {
   out.headline = (out.headline || [])
     .filter(s => s?.t?.trim())
     .map(s => ({ t: s.t.trim(), c: COLORS.includes(s.c) ? s.c : 'white' }));
@@ -173,5 +193,37 @@ export async function buildPost({ text, imagePath, imageUrl }) {
   /* array -> text. Model kabhi string bhi bhej deta hai, dono handle karo. */
   const paras = Array.isArray(out.caption) ? out.caption : String(out.caption || '').split(/\n{2,}/);
   out.caption = paras.map(p => String(p).trim()).filter(Boolean).join('\n\n');
+  return out;
+}
+
+/**
+ * Kai khabron ke liye ek hi Gemini request.
+ * Tasveer nahi bheji jati — batch bhari ho jata hai aur 503 ka khatra barhta hai.
+ * @param {Array<{title,text}>} items
+ * @returns {Promise<Array>} har item ke liye nateeja (usable=false bhi ho sakta hai)
+ */
+export async function buildPosts(items) {
+  need(cfg.gemini.key, 'GEMINI_API_KEY');
+  if (!items.length) return [];
+
+  const body = items.map((it, i) =>
+    `### NEWS ${i}\n${(it.text || it.title).slice(0, 3500)}`).join('\n\n');
+
+  const json = await callGemini({
+    systemInstruction: { parts: [{ text: SYSTEM }] },
+    contents: [{ role: 'user', parts: [{ text:
+      `Neeche ${items.length} alag khabrein hain. HAR EK ke liye alag post banao.\n` +
+      `"index" wahi number ho jo NEWS ke saath likha hai.\n\n${body}` }] }],
+    generationConfig: { temperature: 0.6, responseMimeType: 'application/json', responseSchema: BATCH_SCHEMA },
+  });
+
+  const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error('Gemini ne khaali jawab diya');
+
+  const out = new Array(items.length).fill(null);
+  for (const post of JSON.parse(raw).posts || []) {
+    const i = Number(post.index);
+    if (Number.isInteger(i) && i >= 0 && i < items.length) out[i] = normalise(post);
+  }
   return out;
 }

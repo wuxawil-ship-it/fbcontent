@@ -3,11 +3,12 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ROOT, cfg } from './config.js';
 import { renderCard, closeBrowser } from './render.js';
-import { buildPost } from './ai.js';
+import { buildPosts } from './ai.js';
 import { fetchImageSet } from './image.js';
 import { pickSource, fetchArticleMeta } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
 import { isSeen, markSeen, lastPostedAt, postsToday, cleanup } from './store.js';
+import { readQueue, pushQueue, shiftQueue, requeue } from './queue.js';
 
 const args = process.argv.slice(2);
 const cmd = args[0] || 'demo';
@@ -16,6 +17,7 @@ const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i > -1 ? args[i
 
 const slug = s => (s || 'card').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* ---------------------------------------------------------- demo */
 async function demo() {
@@ -37,156 +39,162 @@ async function demo() {
   }
 }
 
-/* ---------------------------------------------------------- one pass */
-async function runOnce({ post, open }) {
-  const made = [];
-  let catchup = 1;
-
-  const wiped = cleanup();
-  if (wiped) console.log(`  ${wiped} purani files saaf kin`);
-
-  /* Din bhar mein POSTS_PER_DAY posts, barabar phaili hui.
-     Check har 30 min hota hai lekin post tab hi jab pace ijazat de. */
-  if (post) {
-    const target = cfg.post.perDay;
-    const done = postsToday();
-    if (done >= target) {
-      console.log(`  aaj ki ${target} posts poori ho chukin — kal phir`);
-      return;
-    }
-
-    const now = new Date();
-    const endOfDay = new Date(now).setHours(23, 59, 59, 999);
-    const minsLeft = Math.max(1, (endOfDay - now) / 60_000);
-    const pace = Math.max(cfg.post.minGapMinutes, minsLeft / (target - done));
-    const since = (Date.now() - lastPostedAt()) / 60_000;
-
-    if (since < pace) {
-      console.log(`  aaj ${done}/${target} — agli post ${Math.round(pace - since)} min baad ` +
-                  `(har ~${Math.round(pace)} min ka pace)`);
-      return;
-    }
-    /* GitHub ka cron ticks girata hai (dekha gaya: 5 ghante mein 1 run).
-       Is liye jab run hota hai to pichre hue kaam ka hissa bhi pakro. */
-    const elapsed = 1440 - minsLeft;
-    const expected = Math.floor(target * (elapsed / 1440));
-    const behind = Math.max(0, expected - done);
-    catchup = Math.min(cfg.post.catchupMax, 1 + behind);
-
-    console.log(`  aaj ${done}/${target} (is waqt tak ${expected} hone chahiye the) — ` +
-                `is run mein ${catchup} post`);
-  }
+/* ------------------------------------------------- queue bharna */
+/* Ek Gemini request mein kai khabrein — free tier par 20 req/din/model hai,
+   is liye har khabar ke liye alag request bhejna kaam nahi karta. */
+async function refill(need) {
   const items = await pickSource(opt('source'))();
   console.log(`  ${items.length} items mile`);
 
-  /* Kuch mauzu zyada chalte hain (Trump/US politics). Jin khabron mein ye
-     keywords hon unhe pehle uthao — baqi phir bhi qatar mein rehti hain. */
-  const score = i => {
-    const hay = `${i.title} ${i.text}`.toLowerCase();
-    return cfg.post.priority.reduce((n, k) => n + (hay.includes(k) ? 1 : 0), 0);
-  };
-
   const unseen = items.filter(i => !isSeen(i));
-  if (cfg.post.priority.length) unseen.sort((a, b) => score(b) - score(a));
-
-  const want = args.includes('--max') ? Number(opt('max')) : Math.max(cfg.maxPerRun, catchup);
-  /* Zyada candidates rakho: agar ek khabar par Gemini fail ho jaye to
-     poora run zaaya na ho, agli khabar par chale jao. */
-  const fresh = unseen.slice(0, want + 4);
-  let sent = 0;
-  if (fresh.length && cfg.post.priority.length) {
-    const s0 = score(fresh[0]);
-    if (s0) console.log(`  priority match (${s0} keyword) — ye khabar pehle`);
+  if (cfg.post.priority.length) {
+    const score = i => {
+      const hay = `${i.title} ${i.text}`.toLowerCase();
+      return cfg.post.priority.reduce((n, k) => n + (hay.includes(k) ? 1 : 0), 0);
+    };
+    unseen.sort((a, b) => score(b) - score(a));
   }
-  if (!fresh.length) return console.log('  kuch naya nahi.');
 
-  for (const item of fresh) {
-    if (sent >= want) break;
-    console.log(`\n  → ${item.title}`);
+  const picked = unseen.slice(0, need);
+  if (!picked.length) return console.log('  koi nayi khabar nahi');
+
+  /* article text pehle — caption is ke bagair khokhli aati hai */
+  for (const item of picked) {
+    const art = await fetchArticleMeta(item.link);
+    if (art.text.length > item.text.length) item.text = `${item.title}\n\n${art.text}`;
+    if (art.image) item.images = [...item.images, art.image];
+  }
+
+  console.log(`  ${picked.length} khabrein ek hi Gemini request mein bhej rahe hain...`);
+  const results = await buildPosts(picked);
+
+  const ready = [];
+  results.forEach((ai, i) => {
+    const item = picked[i];
+    if (!ai) return console.log(`    ${i}: Gemini ne chhor diya — ${item.title.slice(0, 40)}`);
+    if (!ai.usable) {
+      console.log(`    ${i}: skip (${ai.reason || 'usable=false'})`);
+      return markSeen(item, { skipped: ai.reason || 'unusable' });
+    }
+    ready.push({
+      id: item.id, title: item.title, link: item.link, source: item.source,
+      images: item.images, headline: ai.headline, punchline: ai.punchline,
+      caption: ai.caption, kicker: ai.kicker, focus: ai.focus,
+    });
+    markSeen(item, { queued: true });
+  });
+
+  if (ready.length) console.log(`  ✓ ${pushQueue(ready)} posts qatar mein tayyar`);
+}
+
+/* ------------------------------------------------- qatar se post */
+async function publishOne(entry, { post }) {
+  console.log(`\n  → ${entry.title}`);
+
+  const want = cfg.card.inset ? 2 : 1;
+  const pics = await fetchImageSet(entry.images, { max: want });
+  if (!pics.length) { console.log('    koi chalne wali image nahi — chhor rahe hain'); return null; }
+  const [pic, second] = pics;
+  console.log(`    image: ${pic.w}x${pic.h}`);
+
+  const file = path.join(cfg.dirs.out, `${stamp()}-${slug(entry.title)}.jpg`);
+  const card = await renderCard({
+    template: opt('template', cfg.card.template),
+    headline: entry.headline, punchline: entry.punchline, images: [pic.file],
+    inset: second ? { image: second.file, ring: 'white' } : null,
+    focus: entry.focus, accent: cfg.card.accent, texture: cfg.card.texture,
+    kicker: entry.kicker, brand: cfg.card.brand,
+    footer: entry.source ? `Source: ${entry.source}` : '',
+  }, file);
+
+  const caption = [entry.caption, entry.link && `\nSource: ${entry.link}`].filter(Boolean).join('\n');
+
+  if (!post) {
+    const txt = card.file.replace(/\.jpg$/, '.txt');
+    await fs.writeFile(txt, caption, 'utf8');
+    console.log(`    card: ${path.basename(card.file)}  +  ${path.basename(txt)}`);
+    return { image: card.file, caption: txt, title: entry.title };
+  }
+
+  const res = await publishPhoto({ imagePath: card.file, caption });
+  console.log(`    ✓ posted: ${res.url}`);
+  markSeen(entry, { posted: res.id });
+  return { posted: res.id };
+}
+
+/* ---------------------------------------------------------- run */
+async function runOnce({ post, open }) {
+  const wiped = cleanup();
+  if (wiped) console.log(`  ${wiped} purani files saaf kin`);
+
+  let want = args.includes('--max') ? Number(opt('max')) : cfg.maxPerRun;
+
+  if (post) {
+    const target = cfg.post.perDay;
+    const done = postsToday();
+    if (done >= target) return console.log(`  aaj ki ${target} posts poori — kal phir`);
+
+    const now = new Date();
+    const minsLeft = Math.max(1, (new Date(now).setHours(23, 59, 59, 999) - now) / 60_000);
+    const pace = Math.max(cfg.post.minGapMinutes, minsLeft / (target - done));
+    const since = (Date.now() - lastPostedAt()) / 60_000;
+    if (since < pace) {
+      return console.log(`  aaj ${done}/${target} — agli post ${Math.round(pace - since)} min baad`);
+    }
+
+    /* GitHub cron ticks girata hai, is liye pichra hua kaam bhi pakro */
+    const expected = Math.floor(target * ((1440 - minsLeft) / 1440));
+    want = Math.min(cfg.post.catchupMax, 1 + Math.max(0, expected - done), target - done);
+    console.log(`  aaj ${done}/${target} (ab tak ${expected} hone chahiye the) — is run mein ${want}`);
+  }
+
+  /* qatar khaali ho rahi ho to ek batch call se bhar lo */
+  const queued = readQueue().length;
+  console.log(`  qatar mein ${queued} tayyar`);
+  if (queued < want + cfg.post.queueFloor) {
+    try { await refill(cfg.post.batchSize); }
+    catch (e) { console.error(`  refill fail: ${e.message.split('\n')[0]}`); }
+  }
+
+  const made = [];
+  for (let n = 0; n < want; n++) {
+    const entry = shiftQueue();
+    if (!entry) { console.log('\n  qatar khaali'); break; }
     try {
-      /* article pehle: us se poora text bhi milta hai aur og:image bhi */
-      const art = await fetchArticleMeta(item.link);
-      if (art.text) console.log(`    article: ${art.text.length} chars`);
-
-      /* Feed ki image pehle: og:image par aksar publisher ka logo baked hota hai
-         (Guardian ka "The Guardian" box), jo hamare card par bura lagta hai.
-         og:image sirf tab jab feed koi image de hi na (jaise DW). */
-      const want = cfg.card.inset ? 2 : 1;
-      let pics = await fetchImageSet(item.images, { max: want });
-      if (!pics.length && art.image) {
-        console.log('    feed mein image nahi — article ki og:image use ho rahi hai');
-        pics = await fetchImageSet([art.image], { max: want });
-      }
-      if (!pics.length) { console.log('    skip: koi chalne wali image nahi mili'); continue; }
-      const [pic, second] = pics;
-      console.log(`    image: ${pic.w}x${pic.h}${second ? ` (+inset ${second.w}x${second.h})` : ''}`);
-
-      const text = art.text.length > item.text.length ? `${item.title}\n\n${art.text}` : item.text;
-
-      const ai = await buildPost({ text, imagePath: pic.file });
-      if (!ai.usable) { console.log(`    skip: ${ai.reason}`); markSeen(item, { skipped: ai.reason }); continue; }
-
-      const file = path.join(cfg.dirs.out, `${stamp()}-${slug(item.title)}.jpg`);
-      const card = await renderCard({
-        template: opt('template', cfg.card.template),
-        headline: ai.headline, punchline: ai.punchline, images: [pic.file],
-        inset: second ? { image: second.file, ring: 'white' } : null,
-        focus: ai.focus, accent: cfg.card.accent, texture: cfg.card.texture,
-        kicker: ai.kicker, brand: cfg.card.brand,
-        footer: item.source ? `Source: ${item.source}` : '',
-      }, file);
-      console.log(`    card: ${card.file}`);
-
-      const caption = [ai.caption, item.link && `\nSource: ${item.link}`].filter(Boolean).join('\n');
-
-      if (!post) {
-        /* caption ko card ke saath .txt mein likho — manual posting ke liye copy karna asaan */
-        const txt = card.file.replace(/\.jpg$/, '.txt');
-        await fs.writeFile(txt, caption, 'utf8');
-        console.log(`    caption: ${path.basename(txt)}`);
-        console.log(caption.split('\n').map(l => '    │ ' + l).join('\n'));
-        made.push({ image: card.file, caption: txt, title: item.title });
-        sent++;
-        continue; /* dry-run mein seen mark nahi karte, taake dobara try ho sake */
-      }
-
-      const res = await publishPhoto({ imagePath: card.file, caption });
-      console.log(`    ✓ posted: ${res.url}`);
-      markSeen(item, { posted: res.id });
-      sent++;
-
-      /* Ek hi run ki posts feed mein ek saath na tapken */
-      if (sent < want && cfg.post.spacingSeconds) {
-        console.log(`    ${cfg.post.spacingSeconds}s ruk rahe hain agli post se pehle`);
-        await new Promise(r => setTimeout(r, cfg.post.spacingSeconds * 1000));
+      const r = await publishOne(entry, { post });
+      if (!r) continue;
+      made.push(r);
+      if (post && n < want - 1 && cfg.post.spacingSeconds) {
+        console.log(`    ${cfg.post.spacingSeconds}s ruk rahe hain`);
+        await sleep(cfg.post.spacingSeconds * 1000);
       }
     } catch (e) {
       console.error(`    ✗ ${e.message.split('\n')[0]}`);
-      console.log('    agli khabar par ja rahe hain');
+      if (requeue(entry)) console.log('    wapas qatar mein — baad mein dobara');
     }
   }
 
-  if (post && !sent) console.log('\n  is run mein kuch post nahi hua');
-
   if (made.length && !post) {
-    console.log(`\n  ${made.length} post tayyar — ${cfg.dirs.out}`);
-    made.forEach((m, i) => console.log(`    ${i + 1}. ${path.basename(m.image)}`));
+    console.log(`\n  ${made.length} tayyar — ${cfg.dirs.out}`);
     if (open) spawn('open', [cfg.dirs.out], { stdio: 'ignore', detached: true }).unref();
   }
 }
 
-/* ---------------------------------------------------------- main */
+/* --------------------------------------------------------- main */
 const commands = {
   demo,
   run:    () => runOnce({ post: flag('post'), open: flag('open') }),
   review: () => runOnce({ post: false, open: true }),
-  check: async () => console.log(JSON.stringify(await whoami(), null, 2)),
+  check:  async () => {
+    console.log(JSON.stringify(await whoami(), null, 2));
+    console.log(`qatar mein ${readQueue().length} posts tayyar, aaj ${postsToday()} ja chukin`);
+  },
   watch: async () => {
     const mins = Number(opt('every', 20));
     console.log(`watch mode — har ${mins} min. Ctrl+C se band karo.`);
     for (;;) {
       await runOnce({ post: flag('post'), open: false }).catch(e => console.error('run fail:', e.message));
-      await new Promise(r => setTimeout(r, mins * 60_000));
+      await sleep(mins * 60_000);
     }
   },
 };

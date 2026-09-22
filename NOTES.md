@@ -241,6 +241,26 @@ chahiye thin, aur pichra hua kaam pakarne ke liye ek run mein 3 tak posts karta 
 
 ---
 
+## Batching — quota ka asli hal (2026-09-22 raat)
+
+Model rotation naakaam raha. Naapa: 18 models mein **sirf 2 chal rahe the**, 6 ka kota
+khatam, 10 busy. Har din yahi lottery hoti.
+
+**Hal: ek Gemini request mein kai khabrein.** 18 posts ke liye 18 requests ke bajaye
+`BATCH_SIZE=6` par sirf **3 requests** — ek model ke 20 ke kote mein 6 guna gunjaish.
+
+Nateeja tayyar posts ki qatar (`data/queue.json`) mein jata hai; post karte waqt koi
+Gemini call nahi hoti — sirf image download, render, publish.
+
+Ye cron wala masla bhi khud hal karta hai: tick gir jaye to qatar mein maal para hai.
+Aur `queue.json` bhi repo mein commit hoti hai taake Actions runs ke darmiyan bachi rahe.
+
+Tasdeeq: ek request se 3 posts bani (`✓ 3 posts qatar mein tayyar`).
+
+**Nota:** aaj ka kota testing mein khatam ho gaya. Kota rozana reset hota hai.
+
+---
+
 ## Abhi pending
 
 - [ ] **Pehla live post** — token tayyar hai (Safu Crypto, `pages_manage_posts`, kabhi expire nahi hota). `publishPhoto()` abhi tak chala nahi, user ki ijazat ka intezar

@@ -20,7 +20,7 @@ export const cfg = {
   /* free tier: 20 req/din/model — is liye kai models ki qatar */
   gemini:   { key: env('GEMINI_API_KEY'),
               models: env('GEMINI_MODELS',
-                'gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite'
+                'gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.1-flash-lite,gemini-3.1-flash-lite-preview,gemini-flash-latest'
               ).split(',').map(m => m.trim()).filter(Boolean) },
   rss:      { feeds: env('RSS_FEEDS').split(',').map(s => s.trim()).filter(Boolean) },
   apify:    { token: env('APIFY_TOKEN'), actor: env('APIFY_ACTOR', 'apify~facebook-posts-scraper'),
@@ -35,6 +35,8 @@ export const cfg = {
               minGapMinutes: num('MIN_GAP_MINUTES', 20),   /* farsh — is se tez kabhi nahi */
               keepDays: num('KEEP_DAYS', 7),
               catchupMax: num('CATCHUP_MAX', 3),
+              batchSize: num('BATCH_SIZE', 6),
+              queueFloor: num('QUEUE_FLOOR', 2),
               spacingSeconds: num('SPACING_SECONDS', 90),
               priority: env('PRIORITY_KEYWORDS').split(',').map(k => k.trim().toLowerCase()).filter(Boolean) },
   maxPerRun: num('MAX_PER_RUN', 1),
