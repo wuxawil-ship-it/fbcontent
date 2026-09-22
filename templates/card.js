@@ -1,7 +1,8 @@
 /* Card renderer — same file browser preview aur Puppeteer dono use karte hain.
    Puppeteer: await page.evaluate(d => window.renderCard(d), data)  */
 (function () {
-  const COLORS = ['white', 'lime', 'cyan', 'red', 'amber'];
+  const COLORS = ['white', 'accent', 'red', 'lime', 'amber'];
+  const ALIAS = { cyan: 'accent', brand: 'accent', blue: 'accent' };   /* purana data bhi chale */
 
   function esc(s) {
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -10,7 +11,7 @@
   /* headline segments -> colored inline spans */
   function headlineHTML(segments) {
     return segments.map((seg, i) => {
-      const c = COLORS.includes(seg.c) ? seg.c : 'white';
+      const c = COLORS.includes(ALIAS[seg.c] || seg.c) ? (ALIAS[seg.c] || seg.c) : 'white';
       const sp = i < segments.length - 1 ? ' ' : '';
       return `<span class="c-${c}">${esc(seg.t).trim()}${sp}</span>`;
     }).join('');
@@ -31,10 +32,22 @@
     return best;
   }
 
-  function photoHTML(images) {
+  /* focus = subject tasveer mein kahan hai; crop usay kaate nahi */
+  const FOCUS = { left: '25% 40%', center: '50% 40%', right: '75% 40%', top: '50% 18%', bottom: '50% 80%' };
+
+  function photoHTML(images, focus) {
     const list = (images || []).slice(0, 2).filter(Boolean);
     if (!list.length) return '<div class="photo"></div>';
-    return `<div class="photo">${list.map(src => `<img src="${esc(src)}" alt="">`).join('')}</div>`;
+    const pos = FOCUS[focus] || FOCUS.center;
+    return `<div class="photo">${list
+      .map(src => `<img src="${esc(src)}" style="object-position:${pos}" alt="">`).join('')}</div>`;
+  }
+
+  /* Reference post wala gol inset — peeche ki main tasveer ke upar */
+  function insetHTML(inset) {
+    if (!inset?.image) return '';
+    const ring = ['red', 'accent', 'white'].includes(inset.ring) ? inset.ring : 'white';
+    return `<div class="inset ring-${ring}"><img src="${esc(inset.image)}" alt=""></div>`;
   }
 
   function layout(d) {
@@ -43,15 +56,18 @@
       `<div class="footer"><span class="handle">${esc(d.brand || '')}</span><span>${esc(d.footer || '')}</span></div>`;
     const kick = d.kicker ? `<div><span class="kicker">${esc(d.kicker)}</span></div>` : '';
 
+    const photo = photoHTML(d.images, d.focus);
+    const inset = insetHTML(d.inset);
+
     switch (d.template) {
       case 'overlay':
-        return photoHTML(d.images) + `<div class="scrim"></div>` +
+        return photo + `<div class="scrim"></div>` + inset +
           `<div class="content">${kick}${head}${foot}</div>`;
       case 'band':
-        return photoHTML(d.images) +
+        return photo + inset +
           `<div class="content"><div class="rule"></div><div class="right">${kick}${head}${foot}</div></div>`;
       default: /* classic */
-        return photoHTML(d.images) + head + foot;
+        return photo + inset + head + foot;
     }
   }
 
@@ -62,7 +78,7 @@
     card.className = d.template;
     card.style.width = d.width + 'px';
     card.style.height = d.height + 'px';
-    if (d.accent) document.documentElement.style.setProperty('--lime', d.accent);
+    if (d.accent) document.documentElement.style.setProperty('--accent', d.accent);
     card.innerHTML = layout(d);
 
     /* fonts + images dono ready hone ka intezar — warna screenshot adhoori aati hai */

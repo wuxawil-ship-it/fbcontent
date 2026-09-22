@@ -47,7 +47,8 @@ cp .env.example .env
 | `RSS_FEEDS` | apni pasand ke feeds, comma se alag |
 | `FB_PAGE_ID` | Page → About → Page ID |
 | `FB_PAGE_TOKEN` | neeche dekho |
-| `BRAND_HANDLE` | `@yourpage` — card ke neeche chhapta hai |
+| `BRAND_HANDLE` | `@safucrypto` — card ke neeche chhapta hai |
+| `BRAND_ACCENT` | highlight color, default `#31D6E8` |
 
 **Page token (ek dafa ka kaam):**
 
@@ -81,13 +82,24 @@ tab `--post` lagao.
 |---|---|
 | `classic` | rounded photo upar, centered multi-color headline neeche (reference wala style) |
 | `overlay` | full-bleed photo, gradient, headline photo ke upar |
-| `band` | edge-to-edge photo, neeche newsroom band + red accent bar |
+| `band` | edge-to-edge photo, neeche newsroom band + accent bar |
+
+Teeno par **gol inset circle** lag sakta hai — peeche main tasveer, upar chhoti gol tasveer
+(related incident) ring ke saath, jaise The London Economic ke posts mein hota hai:
+
+```js
+inset: { image: '/path/to/pic.jpg', ring: 'white' }   // ring: white | red | accent
+```
+
+Yeh tab lagta hai jab khabar mein **do alag** tasveerein milen. Ek hi photo ke alag size
+inset mein dobara nahi lagte — `src/image.js` unhe pehchan leta hai. `CARD_INSET=0` se band.
 
 Design badalna ho to **sirf `templates/card.css`** kholo. Upar `:root` mein colors, padding
 aur radius ke tokens hain — baaki sab wahan se derive hota hai.
 
-Headline ke rang Gemini chunta hai (`src/ai.js` ke prompt mein rule likhe hain):
-`white` normal · `lime` action verb · `cyan` proper noun · `red` serious · `amber` numbers.
+Headline ke rang Gemini chunta hai, lekin **jaan boojh kar bohat kam**: kam se kam 70% white,
+sirf **ek** phrase accent (brand color), aur red sirf waqai sangeen khabar par. Zyada se zyada
+2 colored segments — `src/ai.js` code mein bhi yeh limit lagi hui hai, sirf prompt par bharosa nahi.
 
 Font badalna ho: naya `.ttf` `fonts/` mein daalo, `scripts/build-fonts.mjs` mein naam badlo,
 `npm run build:fonts` chalao. (Fonts base64 ho kar CSS mein jaate hain kyunki Chrome
@@ -108,6 +120,8 @@ phir `http://127.0.0.1:8777/templates/classic.html` kholo.
 - **Apify actor:** tumhara existing repo. `src/` idhar copy karo, Apify image mein Chrome maujood hai.
 
 `data/seen.json` duplicate posts rokti hai — deploy ke waqt isay persist karna zaroori hai.
+
+Project ke faisle aur testing findings [NOTES.md](NOTES.md) mein hain.
 
 ## 7. Files
 

@@ -2,7 +2,7 @@ import path from 'node:path';
 import { ROOT, cfg } from './config.js';
 import { renderCard, closeBrowser } from './render.js';
 import { buildPost } from './ai.js';
-import { fetchBestImage } from './image.js';
+import { fetchImageSet } from './image.js';
 import { pickSource } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
 import { isSeen, markSeen } from './store.js';
@@ -19,13 +19,14 @@ const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 async function demo() {
   const data = {
     headline: [
-      { t: 'US prepares', c: 'lime' }, { t: 'to sanction the', c: 'white' },
-      { t: 'International Criminal Court', c: 'cyan' }, { t: 'following', c: 'white' },
-      { t: 'previously', c: 'lime' }, { t: 'issued', c: 'white' },
-      { t: 'arrest warrant', c: 'red' }, { t: 'for Israeli PM Netanyahu.', c: 'white' },
+      { t: 'US prepares to sanction the', c: 'white' },
+      { t: 'International Criminal Court', c: 'accent' },
+      { t: 'over its arrest warrant for Israeli PM Netanyahu.', c: 'white' },
     ],
-    images: [path.join(ROOT, 'assets/demo-a.jpg'), path.join(ROOT, 'assets/demo-b.jpg')],
-    kicker: 'World', brand: cfg.card.brand || '@yourpage', footer: 'Source: Reuters',
+    images: [path.join(ROOT, 'assets/demo-a.jpg')],
+    inset: { image: path.join(ROOT, 'assets/demo-b.jpg'), ring: 'white' },
+    focus: 'center', accent: cfg.card.accent,
+    kicker: 'World', brand: cfg.card.brand || '@safucrypto', footer: 'Source: Reuters',
   };
   for (const template of ['classic', 'overlay', 'band']) {
     const out = path.join(cfg.dirs.out, `demo-${template}.jpg`);
@@ -45,9 +46,11 @@ async function runOnce({ post }) {
   for (const item of fresh) {
     console.log(`\n  → ${item.title}`);
     try {
-      const pic = await fetchBestImage(item.images);
-      if (!pic) { console.log('    skip: koi chalne wali image nahi mili'); continue; }
-      console.log(`    image: ${pic.w}x${pic.h}`);
+      const want = cfg.card.inset ? 2 : 1;
+      const pics = await fetchImageSet(item.images, { max: want });
+      if (!pics.length) { console.log('    skip: koi chalne wali image nahi mili'); continue; }
+      const [pic, second] = pics;
+      console.log(`    image: ${pic.w}x${pic.h}${second ? ` (+inset ${second.w}x${second.h})` : ''}`);
 
       const ai = await buildPost({ text: item.text, imagePath: pic.file });
       if (!ai.usable) { console.log(`    skip: ${ai.reason}`); markSeen(item, { skipped: ai.reason }); continue; }
@@ -56,6 +59,8 @@ async function runOnce({ post }) {
       const card = await renderCard({
         template: opt('template', cfg.card.template),
         headline: ai.headline, images: [pic.file],
+        inset: second ? { image: second.file, ring: 'white' } : null,
+        focus: ai.focus, accent: cfg.card.accent,
         kicker: ai.kicker, brand: cfg.card.brand,
         footer: item.source ? `Source: ${item.source}` : '',
       }, file);

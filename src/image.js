@@ -41,36 +41,79 @@ export function imageSize(buf) {
   return null;
 }
 
+/* Ek hi tasveer ke kai size aksar sirf query string mein farq rakhte hain
+   (Guardian: ?width=700 / 460 / 140). Signature se unhe ek hi picture mana jata hai. */
+function signature(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname + u.pathname.replace(/\d+/g, '#');
+  } catch { return url; }
+}
+
+/* Card ke liye tasveer kaam ki hai ya nahi */
+function qualityCheck({ w, h }, minWidth) {
+  const ratio = w / h;
+  if (w < minWidth) return `chhoti (${w}px)`;
+  if (w * h < 300_000) return `kam pixels (${w}x${h})`;
+  if (ratio > 2.6) return `banner jaisi (${ratio.toFixed(1)}:1)`;   /* website banners */
+  if (ratio < 0.45) return `bohat lambi (${ratio.toFixed(2)}:1)`;
+  return null;
+}
+
+async function download(url) {
+  const res = await fetch(url, {
+    headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', referer: new URL(url).origin },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const buf = Buffer.from(await res.arrayBuffer());
+  const size = imageSize(buf);
+  if (!size) throw new Error('image parse nahi hui');
+
+  const ext = buf.readUInt32BE(0) === 0x89504e47 ? 'png'
+            : buf.toString('ascii', 8, 12) === 'WEBP' ? 'webp' : 'jpg';
+  const file = path.join(cfg.dirs.tmp, `${crypto.randomUUID()}.${ext}`);
+  await fs.writeFile(file, buf);
+  return { file, url, bytes: buf.length, ...size };
+}
+
 /**
- * Candidates ko bari-bari try karta hai aur pehli aisi image leta hai jo minWidth poori kare.
- * Koi bhi poori na kare to jo sab se bari mili wohi de deta hai.
+ * Candidates se ALAG-ALAG tasveerein nikalta hai (ek hi photo ke sizes ko ek hi mana jata hai),
+ * har group mein sab se bari/behtar wali chunta hai.
+ * @returns {Promise<Array<{file,url,w,h,bytes}>>}
  */
-export async function fetchBestImage(candidates, { minWidth = 640 } = {}) {
-  let best = null;
-
-  for (const url of [...new Set((candidates || []).filter(Boolean))].slice(0, 6)) {
-    try {
-      const res = await fetch(url, {
-        headers: { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', referer: new URL(url).origin },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) { console.warn(`    image ${res.status}: ${url.slice(0, 70)}`); continue; }
-
-      const buf = Buffer.from(await res.arrayBuffer());
-      const size = imageSize(buf);
-      if (!size) { console.warn(`    image unreadable: ${url.slice(0, 70)}`); continue; }
-
-      const ext = buf.readUInt32BE(0) === 0x89504e47 ? 'png' : buf.toString('ascii', 8, 12) === 'WEBP' ? 'webp' : 'jpg';
-      const file = path.join(cfg.dirs.tmp, `${crypto.randomUUID()}.${ext}`);
-      await fs.writeFile(file, buf);
-
-      const found = { file, ...size, url };
-      if (size.w >= minWidth) return found;
-      if (!best || size.w > best.w) best = found;
-      console.warn(`    image chhoti (${size.w}px): ${url.slice(0, 60)}`);
-    } catch (e) {
-      console.warn(`    image fail: ${e.message}`);
-    }
+export async function fetchImageSet(candidates, { max = 1, minWidth = 640 } = {}) {
+  const groups = new Map();
+  for (const url of (candidates || []).filter(Boolean)) {
+    const k = signature(url);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(url);
   }
-  return best;
+
+  const picked = [];
+  for (const urls of [...groups.values()].slice(0, 4)) {
+    if (picked.length >= max) break;
+    let fallback = null;
+
+    for (const url of urls.slice(0, 4)) {
+      try {
+        const img = await download(url);
+        const bad = qualityCheck(img, minWidth);
+        if (!bad) { picked.push(img); fallback = null; break; }
+        if (!fallback || img.w > fallback.w) fallback = img;
+        console.warn(`    image ${bad}: ${url.slice(0, 60)}`);
+      } catch (e) {
+        console.warn(`    image fail (${e.message}): ${url.slice(0, 60)}`);
+      }
+    }
+    /* group mein koi bhi standard par poora na utra to sab se bari wali hi le lo */
+    if (fallback && picked.length < max) picked.push(fallback);
+  }
+  return picked;
+}
+
+/** Ek behtareen tasveer — purane call sites ke liye */
+export async function fetchBestImage(candidates, opts = {}) {
+  return (await fetchImageSet(candidates, { ...opts, max: 1 }))[0] ?? null;
 }

@@ -3,10 +3,10 @@
   --bg:#000000;
   --fg:#FFFFFF;
   --muted:#8A8A8E;
-  --lime:#C9F53F;
-  --cyan:#31D6E8;
-  --red:#FF3B34;
-  --amber:#FFC83D;
+  --accent:#31D6E8;   /* brand color — headline highlight, kicker, rule sab yahi use karte hain */
+  --red:#FF3B34;      /* sirf serious khabar ke liye */
+  --lime:#C9F53F;     /* optional, default off */
+  --amber:#FFC83D;    /* optional, default off */
   --pad:56px;
   --radius:30px;
   --gap:44px;
@@ -32,18 +32,18 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:24px}
   overflow:hidden;word-break:normal;overflow-wrap:break-word;hyphens:none;
 }
 .headline span{white-space:pre-wrap}
-.c-white{color:var(--fg)} .c-lime{color:var(--lime)} .c-cyan{color:var(--cyan)}
-.c-red{color:var(--red)}  .c-amber{color:var(--amber)}
+.c-white{color:var(--fg)}  .c-accent{color:var(--accent)}  .c-red{color:var(--red)}
+.c-lime{color:var(--lime)} .c-amber{color:var(--amber)}
 
 /* ---- Small bits ---- */
 .kicker{
   display:inline-block;font-weight:800;font-size:26px;letter-spacing:.14em;text-transform:uppercase;
-  padding:11px 20px 9px;border-radius:9px;background:var(--lime);color:#000;
+  padding:11px 20px 9px;border-radius:9px;background:var(--accent);color:#000;
 }
 .footer{display:flex;align-items:center;justify-content:space-between;font-weight:800;
   font-size:24px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex:0 0 auto}
 .footer .handle{color:var(--fg)}
-.rule{height:5px;background:var(--lime);border-radius:99px;flex:0 0 auto}
+.rule{height:5px;background:var(--accent);border-radius:99px;flex:0 0 auto}
 
 /* =========================================================
    TEMPLATE 1 — classic  (reference screenshot ka style)
@@ -74,8 +74,17 @@ body{display:flex;align-items:flex-start;justify-content:center;padding:24px}
 #card.band{padding:0}
 #card.band .photo{aspect-ratio:4/3;border-radius:0}
 #card.band .content{flex:1 1 auto;display:flex;gap:28px;padding:40px var(--pad) 38px;min-height:0}
-#card.band .rule{width:9px;height:auto;border-radius:99px;background:var(--red)}
+#card.band .rule{width:9px;height:auto;border-radius:99px;background:var(--accent)}
 #card.band .right{flex:1 1 auto;display:flex;flex-direction:column;gap:18px;min-width:0;min-height:0}
 #card.band .headbox{flex:1 1 auto;display:flex;align-items:center;min-height:0}
 #card.band .headline{text-align:left}
 #card.band .footer{padding-top:24px}
+
+/* ---- Circular inset: main photo ke upar chhoti gol tasveer (related incident) ---- */
+.inset{position:absolute;overflow:hidden;border-radius:50%;background:#111;
+  width:310px;height:310px;left:var(--pad);top:var(--pad);
+  border:11px solid var(--fg);box-shadow:0 22px 48px rgba(0,0,0,.6);z-index:2}
+.inset.ring-red{border-color:var(--red)}
+.inset.ring-accent{border-color:var(--accent)}
+.inset img{width:100%;height:100%;object-fit:cover;display:block}
+#card.classic .inset{left:calc(var(--pad) + 26px);top:calc(var(--pad) + 26px)}

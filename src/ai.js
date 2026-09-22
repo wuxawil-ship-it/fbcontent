@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import { cfg, need } from './config.js';
 
-const COLORS = ['white', 'lime', 'cyan', 'red', 'amber'];
+const COLORS = ['white', 'accent', 'red'];
+const FOCUS = ['left', 'center', 'right', 'top', 'bottom'];
 
 /* Gemini ka Schema ek protobuf hai — type ke naam UPPERCASE enum names hain,
    lowercase bhejne par request reject ho sakti hai. */
@@ -24,9 +25,10 @@ const SCHEMA = {
       },
     },
     caption:  { type: 'STRING' },
+    focus:    { type: 'STRING', format: 'enum', enum: FOCUS },
   },
-  required: ['usable', 'headline', 'caption', 'kicker'],
-  propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'caption'],
+  required: ['usable', 'headline', 'caption', 'kicker', 'focus'],
+  propertyOrdering: ['usable', 'reason', 'kicker', 'headline', 'caption', 'focus'],
 };
 
 const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumhara kaam:
@@ -35,20 +37,22 @@ const SYSTEM = `Tum ek news page ke editor ho. Tumhe raw news diya jayega; tumha
    wording copy mat karo. Sirf woh dawe likho jo source mein maujood hain; kuch add mat karo.
 2. headline: 9-15 words, UPPERCASE mein render hoga (tum normal case bhejo). Poori khabar
    ek saans mein. Clickbait nahi, sensational nahi.
-3. headline ko segments mein todo. Har segment ka color:
-   - "white" = normal text (kam se kam 55% segments white hone chahiye)
-   - "lime"  = action / main verb phrase
-   - "cyan"  = institution, country ya proper noun
-   - "red"   = sirf serious/negative cheez (warrant, sanction, strike, ban, death)
-   - "amber" = numbers, dates, amounts
-   Segments ko jodne par exactly original headline banni chahiye, aur 2-4 se zyada
-   colored segments mat banao.
+3. headline ko segments mein todo. RANG BOHAT KAM istemal karo — poori headline
+   rangeen nahi honi chahiye, warna sasti lagti hai:
+   - "white"  = DEFAULT. headline ka kam se kam 70% white hona chahiye.
+   - "accent" = sirf EK sab se ahem phrase (2-4 words). Yeh brand color hai.
+   - "red"    = sirf tab jab khabar waqai sangeen ho (jang, maut, hamla, pabandi,
+                warrant, ban). Aam khabar mein red bilkul mat lagao.
+   Poore headline mein ZYADA SE ZYADA 2 colored segments — aksar sirf 1 kaafi hai.
+   Segments jodne par exactly original headline banni chahiye.
 4. kicker: 1-2 word category, e.g. "World", "Pakistan", "Markets", "Tech".
-5. caption: Facebook post ka text. 3-5 chhote paragraphs. Pehla para = kya hua.
+5. focus: tasveer mein asal subject (banda/cheez) kahan hai — left/center/right/top/bottom.
+   Card tasveer ko crop karta hai, is liye yeh theek batao warna chehra kat jata hai.
+6. caption: Facebook post ka text. 3-5 chhote paragraphs. Pehla para = kya hua.
    Doosra = zaroori background/context. Aakhri = is ka matlab kya hai (analysis).
    Neutral, sober tone. Koi hashtag spam nahi, max 3 hashtags aakhir mein.
    Agar dono taraf ka moaqif hai to dono likho.
-6. usable=false karo agar: khabar clear nahi, ya sirf opinion/rumour hai, ya headline
+7. usable=false karo agar: khabar clear nahi, ya sirf opinion/rumour hai, ya headline
    banane ke liye kaafi facts nahi. Tab reason bhi likho.
 
 Sirf JSON return karo.`;
@@ -87,5 +91,12 @@ export async function buildPost({ text, imagePath, imageUrl }) {
   out.headline = (out.headline || [])
     .filter(s => s?.t?.trim())
     .map(s => ({ t: s.t.trim(), c: COLORS.includes(s.c) ? s.c : 'white' }));
+
+  /* Model kabhi kabhi rule bhool jata hai — yahan zabardasti 2 tak limit karo */
+  let colored = 0;
+  out.headline = out.headline.map(seg =>
+    seg.c !== 'white' && ++colored > 2 ? { ...seg, c: 'white' } : seg);
+
+  out.focus = FOCUS.includes(out.focus) ? out.focus : 'center';
   return out;
 }

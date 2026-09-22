@@ -23,7 +23,8 @@ export const cfg = {
               pageUrl: env('APIFY_PAGE_URL') },
   fb:       { pageId: env('FB_PAGE_ID'), token: env('FB_PAGE_TOKEN'), version: env('FB_API_VERSION', 'v23.0') },
   card:     { template: env('CARD_TEMPLATE', 'classic'), width: num('CARD_WIDTH', 1080),
-              height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', '') },
+              height: num('CARD_HEIGHT', 1350), brand: env('BRAND_HANDLE', ''),
+              accent: env('BRAND_ACCENT', '#31D6E8'), inset: env('CARD_INSET', '1') !== '0' },
   maxPerRun: num('MAX_PER_RUN', 1),
   dirs: { out: path.join(ROOT, 'out'), tmp: path.join(ROOT, 'tmp'), data: path.join(ROOT, 'data') },
 };
