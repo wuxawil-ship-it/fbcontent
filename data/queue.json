@@ -1,30 +1,60 @@
 [
   {
-    "id": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
-    "title": "Trump v the media – The Latest",
-    "link": "https://www.theguardian.com/news/audio/2026/sep/22/trump-v-the-media-the-latest",
+    "id": "https://www.theguardian.com/world/2026/sep/23/jamaica-king-charles-to-refer-slavery-reparations-petition-to-privy-council",
+    "title": "Jamaica hails King’s decision to refer slavery reparations petition to privy council as ‘really big deal’",
+    "link": "https://www.theguardian.com/world/2026/sep/23/jamaica-king-charles-to-refer-slavery-reparations-petition-to-privy-council",
     "source": "The Guardian",
-    "publishedAt": 1790096424000,
+    "publishedAt": 1790126126000,
     "images": [
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=700&quality=85&auto=format&fit=max&s=54f0f30bec5c2bee8a13214d9d2d3eca",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=460&quality=85&auto=format&fit=max&s=44430dc74b7aa35d1da0c7e78b337286",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=140&quality=85&auto=format&fit=max&s=dce76174e9bc4f33bbb35b25e515a9ea",
-      "https://i.guim.co.uk/img/media/7000a866299f503cfcb91b7b9fc6694a0120e82b/88_0_6880_5504/master/6880.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=5f2d48f8615ef67dfc2476ede15cd3d1"
+      "https://i.guim.co.uk/img/media/1c2dbacb3799105d4e0f77d6315b1d0ae1ca5ae8/1351_102_5986_4789/master/5986.jpg?width=700&quality=85&auto=format&fit=max&s=21c729e3ce2178cf4f468870773d9ab1",
+      "https://i.guim.co.uk/img/media/1c2dbacb3799105d4e0f77d6315b1d0ae1ca5ae8/1351_102_5986_4789/master/5986.jpg?width=460&quality=85&auto=format&fit=max&s=85a3ce9641a3cc6d2f6cb7b6bfa865f6",
+      "https://i.guim.co.uk/img/media/1c2dbacb3799105d4e0f77d6315b1d0ae1ca5ae8/1351_102_5986_4789/master/5986.jpg?width=140&quality=85&auto=format&fit=max&s=44649772a980135bf1bd83fcc619a4cb",
+      "https://i.guim.co.uk/img/media/1c2dbacb3799105d4e0f77d6315b1d0ae1ca5ae8/1351_102_5986_4789/master/5986.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=21fb7c2b08c9637520d40d704347c4b6"
     ],
     "headline": [
       {
-        "t": "MAJOR TV NETWORKS BOYCOTT",
+        "t": "King Charles Refers Historic Jamaican Slavery Reparations Petition",
         "c": "white"
       },
       {
-        "t": "TRUMP ADMINISTRATION PRESS POOL",
+        "t": "To UK Privy Council",
+        "c": "accent"
+      },
+      {
+        "t": "For Review",
+        "c": "white"
+      }
+    ],
+    "punchline": "",
+    "caption": "King Charles III has officially referred a historic slavery reparations petition from Jamaica to the Judicial Committee of the Privy Council for advisory guidance. Jamaican Culture Minister Olivia Grange announced the decision in parliament, describing the referral to Britain's highest appellate body for Commonwealth jurisdictions as a significant breakthrough.\n\nJamaica invoked an uncommon provision within the Judicial Committee Act of 1833, seeking legal clarification on whether the transatlantic chattel slave trade violated law, constituted a crime against humanity, and obligates Britain to provide restitution. Direct arbitration via the International Court of Justice was unavailable due to existing UK jurisdictional exemptions regarding Commonwealth member disputes.\n\nWhile an advisory ruling from the Privy Council will not legally force the UK government to disburse funds, Caribbean officials expect the findings to establish critical legal ground for upcoming diplomatic discussions. Regional leaders are currently coordinating multi-track legal and diplomatic frameworks across the Caribbean community.\n\nThe monarch's decision directs one of the Commonwealth's oldest colonial disputes into Britain's formal judicial system. ⚖️ How should modern legal institutions address state accountability for historic colonial actions? #KingCharles #Jamaica #Reparations",
+    "kicker": "World",
+    "focus": "center"
+  },
+  {
+    "id": "https://www.theguardian.com/us-news/2026/sep/22/california-new-york-trump-wind-energy",
+    "title": "California and New York sue over Trump push to halt wind energy projects",
+    "link": "https://www.theguardian.com/us-news/2026/sep/22/california-new-york-trump-wind-energy",
+    "source": "The Guardian",
+    "publishedAt": 1790112942000,
+    "images": [
+      "https://i.guim.co.uk/img/media/991db22a8f8d22fc130945a7e3dbcd779ae36e26/235_0_3845_3075/master/3845.jpg?width=700&quality=85&auto=format&fit=max&s=920718913c29c0e2d52475ac480037e2",
+      "https://i.guim.co.uk/img/media/991db22a8f8d22fc130945a7e3dbcd779ae36e26/235_0_3845_3075/master/3845.jpg?width=460&quality=85&auto=format&fit=max&s=bc3c90e8b980ae3e15bb04b8fd52b5a1",
+      "https://i.guim.co.uk/img/media/991db22a8f8d22fc130945a7e3dbcd779ae36e26/235_0_3845_3075/master/3845.jpg?width=140&quality=85&auto=format&fit=max&s=411d6cb4ae24b5bf1d6ba3b5920304a1",
+      "https://i.guim.co.uk/img/media/991db22a8f8d22fc130945a7e3dbcd779ae36e26/235_0_3845_3075/master/3845.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=853786b3bb636571201160a82d2564e4"
+    ],
+    "headline": [
+      {
+        "t": "California And New York Sue Trump Administration Over",
+        "c": "white"
+      },
+      {
+        "t": "Multibillion Offshore Wind Buyback",
         "c": "accent"
       }
     ],
     "punchline": "",
-    "caption": "Major news organizations, including CNN, MS Now, and Politico, have initiated a boycott of the White House press pool coverage. This collective action follows the administration's decision to deny these specific outlets access to the White House over disagreements regarding their news coverage.\n\nTensions between the Trump administration and mainstream media have intensified, marking a significant escalation in the ongoing conflict between the press and the executive branch. This move by major networks represents one of the most substantial challenges to the current administration's media relations policy.\n\nThe administration maintains that access is managed based on coverage standards, while journalists argue that the restriction of specific outlets threatens the principle of a free and open press. The situation has prompted a wider debate on the role of media in holding the executive branch accountable.\n\nAs the standoff continues, the public's access to independent reporting from within the White House remains limited. Can a functional democracy operate effectively when the government and the press are in an open boycott? ⚖️\n\n#Trump #Media #WhiteHouse",
-    "kicker": "Media",
-    "focus": "center",
-    "tries": 1
+    "caption": "Democratic attorneys general from California and New York have launched federal lawsuits challenging the Trump administration's multi-billion dollar program to repurchase offshore wind leases. The legal actions aim to invalidate federal buyback deals that pay energy developers approximately four billion dollars in taxpayer funds to cancel ongoing clean energy initiatives.\n\nThe Department of the Interior initiated the lease buybacks following court rulings that restricted executive bans on offshore turbine construction. Under the buyout structure, major developers agreed to terminate wind projects along the Atlantic and Pacific coasts in exchange for reimbursements redirected into fossil fuel and geothermal production.\n\nNew York Attorney General Letitia James characterized the settlements as unlawful expenditures that threaten energy affordability by restricting grid capacity. California Attorney General Rob Bonta argued that federal intervention unnecessarily impedes state-level climate objectives and delays critical renewable infrastructure deployment.\n\nThe litigation sets up a major constitutional and regulatory battle over whether federal initiatives can dismantle state-backed energy transition programs. ⚡ How will legal battles between states and the federal government shape the future of renewable energy development? #ClimateAction #WindEnergy #EnergyPolicy",
+    "kicker": "Environment",
+    "focus": "center"
   }
 ]

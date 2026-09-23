@@ -8,7 +8,7 @@ import { fetchImageSet } from './image.js';
 import { pickSource, fetchArticleMeta, ageHours } from './sources.js';
 import { publishPhoto, whoami } from './facebook.js';
 import { isSeen, markSeen, lastPostedAt, postsToday, totalPosted, cleanup } from './store.js';
-import { readQueue, pushQueue, shiftQueue, requeue } from './queue.js';
+import { readQueue, pushQueue, shiftQueue, requeue, pruneQueue } from './queue.js';
 
 const args = process.argv.slice(2);
 const cmd = args[0] || 'demo';
@@ -154,6 +154,8 @@ async function publishOne(entry, { post }) {
 }
 
 /* ---------------------------------------------------------- run */
+let authFailed = false;
+
 async function runOnce({ post, open }) {
   const wiped = cleanup();
   if (wiped) console.log(`  ${wiped} purani files saaf kin`);
@@ -176,7 +178,11 @@ async function runOnce({ post, open }) {
     console.log(`  aaj ${done}/${cap} (had) — is run mein ${want} tak`);
   }
 
-  /* qatar khaali ho rahi ho to ek batch call se bhar lo */
+  /* Pehle basi maal nikalo, phir gino — warna qatar bhari lagti hai
+     aur refill kabhi trigger nahi hota. */
+  const dropped = pruneQueue(cfg.post.maxAgeHours);
+  if (dropped) console.log(`  ${dropped} basi khabrein qatar se nikalin`);
+
   const queued = readQueue().length;
   console.log(`  qatar mein ${queued} tayyar`);
   if (queued < want + cfg.post.queueFloor) {
@@ -194,20 +200,31 @@ async function runOnce({ post, open }) {
   }
 
   const made = [];
-  for (let n = 0; n < want; n++) {
+  /* n sirf kamyab posts par barhta hai — skip hui khabar poora run zaaya na kare */
+  for (let n = 0, attempts = 0; n < want && attempts < want + 5; attempts++) {
     const entry = shiftQueue();
     if (!entry) { console.log('\n  qatar khaali'); break; }
     try {
       const r = await publishOne(entry, { post });
       if (!r) continue;
       made.push(r);
-      if (post && n < want - 1 && cfg.post.spacingSeconds) {
+      n++;
+      if (post && n < want && cfg.post.spacingSeconds) {
         console.log(`    ${cfg.post.spacingSeconds}s ruk rahe hain`);
         await sleep(cfg.post.spacingSeconds * 1000);
       }
     } catch (e) {
       console.error(`    ✗ ${e.message.split('\n')[0]}`);
       if (requeue(entry)) console.log('    wapas qatar mein — baad mein dobara');
+
+      /* Token ka masla khud theek nahi hota. Chup-chaap "success" dena
+         sab se bura nateeja hai — 12 ghante tak pata hi nahi chalta. */
+      if (e.authProblem) {
+        console.error('\n  ⚠️  FACEBOOK TOKEN KAAM NAHI KAR RAHA — dobara authorize karna paregi.');
+        console.error('     scripts/fb-setup.mjs chalao, phir GitHub secret update karo.\n');
+        authFailed = true;
+        break;
+      }
     }
   }
 
@@ -245,3 +262,6 @@ if (!fn) {
 console.log(`\n▶ ${cmd}${flag('post') ? ' (LIVE — Facebook par post hoga)' : ' (dry-run)'}\n`);
 try { await fn(); } finally { await closeBrowser(); }
 console.log('\n done.\n');
+
+/* Workflow red dikhe taake GitHub notification bheje */
+if (authFailed) process.exit(1);

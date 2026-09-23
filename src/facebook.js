@@ -9,7 +9,11 @@ async function gql(url, init) {
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error) {
     const e = json.error || {};
-    throw new Error(`Facebook ${res.status} ${e.type || ''} (${e.code ?? '?'}): ${e.message || 'unknown'}`);
+    const err = new Error(`Facebook ${res.status} ${e.type || ''} (${e.code ?? '?'}): ${e.message || 'unknown'}`);
+    /* 190 = token expire/invalid, 200 = app ko ijazat nahi.
+       Ye khud theek nahi hote — insaan ko dobara authorize karna parta hai. */
+    err.authProblem = [190, 200, 102].includes(e.code);
+    throw err;
   }
   return json;
 }

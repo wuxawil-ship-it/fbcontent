@@ -8,6 +8,19 @@ export function readQueue() {
   try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return []; }
 }
 
+/**
+ * Basi entries qatar se nikal do.
+ * Ye zaroori hai: basi entries bhi ginti mein aati thin, jis se refill trigger hi
+ * nahi hota tha — qatar "bhari" lagti thi lekin usme sab kuch kaam ka nahi tha.
+ */
+export function pruneQueue(maxAgeHours) {
+  const cutoff = Date.now() - maxAgeHours * 3_600_000;
+  const q = readQueue();
+  const keep = q.filter(e => (e.publishedAt || 0) >= cutoff);
+  if (keep.length !== q.length) write(keep);
+  return q.length - keep.length;
+}
+
 function write(q) {
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
   fs.writeFileSync(FILE, JSON.stringify(q, null, 2));
